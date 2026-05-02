@@ -5,19 +5,22 @@
     "moduleResolution": "Node",
     "outDir": "dist",
     "rootDir": "src",
+
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "ignoreDeprecations": "6.0",
+    "resolveJsonModule": true,
 
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     },
 
-    "types": ["node"],
 
-    "typeRoots": ["./src/types", "./node_modules/@types"]
+    "typeRoots": [
+      "./node_modules/@types"
+    ]
   },
   "include": ["src"]
 }

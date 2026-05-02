@@ -13,8 +13,14 @@ interface AccessTokenPayload {
   role: string;
 }
 
-interface RefreshTokenPayload extends jwt.JwtPayload {
+interface RefreshTokenPayload {
   jti: string;
+  iss?: string;
+  sub?: string;
+  aud?: string | string[];
+  exp?: number;
+  nbf?: number;
+  iat?: number;
 }
 
 /* ===================== ACCESS TOKEN ===================== */
