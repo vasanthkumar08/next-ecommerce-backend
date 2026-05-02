@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+<<<<<<< HEAD
     "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": false,
@@ -31,4 +32,22 @@
     "**/*.mts"
   ],
   "exclude": ["node_modules"]
+=======
+    "target": "ES2020",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "dist",
+    "rootDir": "src",
+
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "ignoreDeprecations": "6.0",
+    "resolveJsonModule": true,
+    "typeRoots": [
+      "./node_modules/@types"
+    ]
+  },
+  "include": ["src"]
+>>>>>>> a40606cc3d3b000569781361f2a758893023b08d
 }
