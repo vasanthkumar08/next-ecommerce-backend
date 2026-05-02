@@ -1,0 +1,24 @@
+{
+  "name": "vasanthtrends-platform",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "microservices/shared",
+    "microservices/api-gateway",
+    "microservices/auth-service",
+    "microservices/product-service",
+    "microservices/cart-service",
+    "microservices/order-service",
+    "microservices/payment-service",
+    "microservices/admin-service"
+  ],
+  "scripts": {
+    "dev:gateway": "npm run dev -w @vasanthtrends/api-gateway",
+    "dev:auth": "npm run dev -w @vasanthtrends/auth-service",
+    "dev:product": "npm run dev -w @vasanthtrends/product-service",
+    "dev:cart": "npm run dev -w @vasanthtrends/cart-service",
+    "dev:order": "npm run dev -w @vasanthtrends/order-service",
+    "dev:payment": "npm run dev -w @vasanthtrends/payment-service",
+    "dev:admin": "npm run dev -w @vasanthtrends/admin-service"
+  }
+}
