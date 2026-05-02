@@ -1,4 +1,4 @@
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
 /* ===================== TYPES ===================== */
@@ -13,7 +13,7 @@ interface AccessTokenPayload {
   role: string;
 }
 
-interface RefreshTokenPayload extends JwtPayload {
+interface RefreshTokenPayload extends jwt.JwtPayload {
   jti: string;
 }
 

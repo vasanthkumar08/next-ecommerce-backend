@@ -1,15 +1,16 @@
 import { Request, Response, NextFunction } from "express";
-import { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import User from "../modules/user/user.model";
 import { verifyAccessToken } from "../utils/jwt";
 
 /**
  * 🔐 Token Payload Type
  */
-interface DecodedToken extends JwtPayload {
+type DecodedToken = jwt.JwtPayload & {
   id?: string;
   sub?: string;
-}
+  role?: string;
+};
 
 /**
  * 🔐 Protect Middleware (Authentication)
