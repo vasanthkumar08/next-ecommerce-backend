@@ -1,6 +1,6 @@
 import type { Request } from "express";
-import User from "../modules/user/user.model";
-import { verifyAccessToken } from "../utils/jwt";
+import User from "../modules/user/user.model.js";
+import { verifyAccessToken } from "../utils/jwt.js";
 
 export interface GraphQLUser {
   _id: string;

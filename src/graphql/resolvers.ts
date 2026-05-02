@@ -1,12 +1,12 @@
 import { GraphQLError } from "graphql";
-import Product from "../modules/product/product.model";
-import Order from "../modules/order/order.model";
-import Review from "../modules/review/review.model";
-import * as authService from "../modules/auth/auth.service";
-import * as cartService from "../modules/cart/cart.service";
-import * as orderService from "../modules/order/order.service";
-import * as wishlistService from "../modules/wishlist/wishlist.service";
-import type { GraphQLContext } from "./context";
+import Product from "../modules/product/product.model.js";
+import Order from "../modules/order/order.model.js";
+import Review from "../modules/review/review.model.js";
+import * as authService from "../modules/auth/auth.service.js";
+import * as cartService from "../modules/cart/cart.service.js";
+import * as orderService from "../modules/order/order.service.js";
+import * as wishlistService from "../modules/wishlist/wishlist.service.js";
+import type { GraphQLContext } from "./context.js";
 
 const requireUser = (context: GraphQLContext) => {
   if (!context.user?._id) {

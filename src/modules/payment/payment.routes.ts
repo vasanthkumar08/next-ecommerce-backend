@@ -1,13 +1,13 @@
 import express, { Router, Request, Response, NextFunction } from "express";
 
-import { createOrder, verify } from "./payment.controller";
-import { protect } from "../../middleware/auth.middleware";
-import { validate } from "../../middleware/validate.middleware";
+import { createOrder, verify } from "./payment.controller.js";
+import { protect } from "../../middleware/auth.middleware.js";
+import { validate } from "../../middleware/validate.middleware.js";
 
 import {
   createPaymentOrderSchema,
   verifyPaymentSchema,
-} from "./payment.validator";
+} from "./payment.validator.js";
 
 /* ===================== ROUTER ===================== */
 

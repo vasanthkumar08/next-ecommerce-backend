@@ -1,5 +1,5 @@
 import { JobsOptions } from "bullmq";
-import { orderQueue } from "../queues/order.queue";
+import { orderQueue } from "../queues/order.queue.js";
 
 /**
  * 📦 Order Item Type

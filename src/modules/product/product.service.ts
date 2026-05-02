@@ -1,7 +1,7 @@
-import Product from "./product.model";
-import type { IProduct } from "./product.model";
-import APIFeatures from "../../utils/apiFeatures";
-import { getCache, setCache } from "../../utils/cache";
+import Product from "./product.model.js";
+import type { IProduct } from "./product.model.js";
+import APIFeatures from "../../utils/apiFeatures.js";
+import { getCache, setCache } from "../../utils/cache.js";
 
 /* ===================== TYPES ===================== */
 

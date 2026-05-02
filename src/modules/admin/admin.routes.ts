@@ -1,5 +1,5 @@
 import express, { Router } from "express";
-import dashboardRoutes from "./dashboard/dashboard.routes";
+import dashboardRoutes from "./dashboard/dashboard.routes.js";
 
 const router: Router = express.Router();
 

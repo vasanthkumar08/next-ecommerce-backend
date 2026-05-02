@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import User from "../../user/user.model";
-import Order from "../../order/order.model";
-import { sendResponse } from "../../../utils/response";
+import User from "../../user/user.model.js";
+import Order from "../../order/order.model.js";
+import { sendResponse } from "../../../utils/response.js";
 
 const userRoles = ["admin", "user", "manager"] as const;
 type UserRole = (typeof userRoles)[number];

@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import * as dashboardService from "./dashboard.service";
-import asyncHandler from "../../../utils/asyncHandler";
-import AppError from "../../../utils/AppError";
-import { sendResponse } from "../../../utils/response";
+import * as dashboardService from "./dashboard.service.js";
+import asyncHandler from "../../../utils/asyncHandler.js";
+import AppError from "../../../utils/AppError.js";
+import { sendResponse } from "../../../utils/response.js";
 
 /* ===================== GET DASHBOARD ===================== */
 export const getDashboard = asyncHandler(

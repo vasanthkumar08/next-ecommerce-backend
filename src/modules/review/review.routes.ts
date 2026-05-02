@@ -4,10 +4,10 @@ import {
   add,
   getAll,
   remove,
-} from "./review.controller";
+} from "./review.controller.js";
 
-import { protect } from "../../middleware/auth.middleware";
-import { validate } from "../../middleware/validate.middleware";
+import { protect } from "../../middleware/auth.middleware.js";
+import { validate } from "../../middleware/validate.middleware.js";
 
 /* ===================== ROUTER ===================== */
 

@@ -1,9 +1,9 @@
 import express, { Request, Response, Router } from "express";
 import crypto from "crypto";
 
-import Order from "../order/order.model";
-import Payment from "./payment.model";
-import env from "../../config/env";
+import Order from "../order/order.model.js";
+import Payment from "./payment.model.js";
+import env from "../../config/env.js";
 
 /* ===================== ROUTER ===================== */
 

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import * as orderService from "./order.service";
-import { sendResponse } from "../../utils/response";
-import type { IOrder } from "./order.model";
+import * as orderService from "./order.service.js";
+import { sendResponse } from "../../utils/response.js";
+import type { IOrder } from "./order.model.js";
 
 /* ===================== SANITIZER ===================== */
 const sanitizeOrder = (order: IOrder) => ({

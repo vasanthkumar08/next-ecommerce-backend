@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import * as userService from "./user.service";
-import asyncHandler from "../../utils/asyncHandler";
-import { sendResponse } from "../../utils/response";
+import * as userService from "./user.service.js";
+import asyncHandler from "../../utils/asyncHandler.js";
+import { sendResponse } from "../../utils/response.js";
 
 /* ===================== TYPES ===================== */
 

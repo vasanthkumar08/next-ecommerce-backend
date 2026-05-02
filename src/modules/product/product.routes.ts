@@ -6,20 +6,20 @@ import {
   getOne,
   update,
   remove,
-} from "./product.controller";
+} from "./product.controller.js";
 
-import { protect, authorize } from "../../middleware/auth.middleware";
-import { validate } from "../../middleware/validate.middleware";
+import { protect, authorize } from "../../middleware/auth.middleware.js";
+import { validate } from "../../middleware/validate.middleware.js";
 
 import {
   createProductValidator,
   updateProductValidator,
-} from "./product.validator";
+} from "./product.validator.js";
 
 import {
   rateLimitMiddleware,
   productLimiter,
-} from "../../middleware/rateLimiter";
+} from "../../middleware/rateLimiter.js";
 
 /* ===================== INIT ===================== */
 

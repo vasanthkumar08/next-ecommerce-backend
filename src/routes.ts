@@ -1,20 +1,19 @@
 import express, { Request, Response, NextFunction, Router } from "express";
 
-// ✅ FIX: all .js extensions removed
-import authRoutes from "./modules/auth/auth.routes";
-import userRoutes from "./modules/user/user.routes";
-import productRoutes from "./modules/product/product.routes";
-import cartRoutes from "./modules/cart/cart.routes";
-import wishlistRoutes from "./modules/wishlist/wishlist.routes";
-import orderRoutes from "./modules/order/order.routes";
-import paymentRoutes from "./modules/payment/payment.routes";
-import paymentWebhookRoutes from "./modules/payment/webhook.routes";
-import addressRoutes from "./modules/address/address.routes";
-import reviewRoutes from "./modules/review/review.routes";
-import dashboardRoutes from "./modules/admin/dashboard/dashboard.routes";
-import analyticsRoutes from "./modules/admin/analytics/analytics.routes";
-import adminOrderRoutes from "./modules/admin/orders/orders.routes";
-import adminUserRoutes from "./modules/admin/users/users.routes";
+import authRoutes from "./modules/auth/auth.routes.js";
+import userRoutes from "./modules/user/user.routes.js";
+import productRoutes from "./modules/product/product.routes.js";
+import cartRoutes from "./modules/cart/cart.routes.js";
+import wishlistRoutes from "./modules/wishlist/wishlist.routes.js";
+import orderRoutes from "./modules/order/order.routes.js";
+import paymentRoutes from "./modules/payment/payment.routes.js";
+import paymentWebhookRoutes from "./modules/payment/webhook.routes.js";
+import addressRoutes from "./modules/address/address.routes.js";
+import reviewRoutes from "./modules/review/review.routes.js";
+import dashboardRoutes from "./modules/admin/dashboard/dashboard.routes.js";
+import analyticsRoutes from "./modules/admin/analytics/analytics.routes.js";
+import adminOrderRoutes from "./modules/admin/orders/orders.routes.js";
+import adminUserRoutes from "./modules/admin/users/users.routes.js";
 
 const router: Router = express.Router();
 

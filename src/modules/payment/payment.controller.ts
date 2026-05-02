@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import * as paymentService from "./payment.service";
-import Order from "../order/order.model";
-import AppError from "../../utils/AppError";
+import * as paymentService from "./payment.service.js";
+import Order from "../order/order.model.js";
+import AppError from "../../utils/AppError.js";
 
 /* ===================== CREATE ORDER ===================== */
 

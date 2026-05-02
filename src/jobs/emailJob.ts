@@ -1,5 +1,5 @@
 import { JobsOptions } from "bullmq";
-import { emailQueue } from "../queues/email.queue";
+import { emailQueue } from "../queues/email.queue.js";
 
 /**
  * 📧 Email Job Data Type

@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
 
-import Order from "./order.model";
-import Cart from "../cart/cart.model";
-import AppError from "../../utils/AppError";
-import type { IProduct } from "../product/product.model";
+import Order from "./order.model.js";
+import Cart from "../cart/cart.model.js";
+import AppError from "../../utils/AppError.js";
+import type { IProduct } from "../product/product.model.js";
 
-import { validateStock, reserveStock, confirmStock, releaseStock } from "../product/stock.service";
+import { validateStock, reserveStock, confirmStock, releaseStock } from "../product/stock.service.js";
 
 interface CheckoutOrderItem {
   product?: string;

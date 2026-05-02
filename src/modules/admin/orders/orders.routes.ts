@@ -1,12 +1,12 @@
 import express, { Router } from "express";
-import { protect, authorize } from "../../../middleware/auth.middleware";
+import { protect, authorize } from "../../../middleware/auth.middleware.js";
 import {
   deleteDeliveredOrder,
   exportOrdersCsv,
   getOrder,
   listOrders,
   updateOrderStatus,
-} from "./orders.controller";
+} from "./orders.controller.js";
 
 const router: Router = express.Router();
 

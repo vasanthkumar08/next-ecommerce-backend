@@ -1,9 +1,9 @@
 import { Response } from "express";
-import * as addressService from "./address.service";
-import asyncHandler from "../../utils/asyncHandler";
-import { sendResponse } from "../../utils/response";
-import AppError from "../../utils/AppError";
-import { AuthRequest } from "../../types/authRequest";
+import * as addressService from "./address.service.js";
+import asyncHandler from "../../utils/asyncHandler.js";
+import { sendResponse } from "../../utils/response.js";
+import AppError from "../../utils/AppError.js";
+import { AuthRequest } from "../../types/authRequest.js";
 
 /* ===================== INPUT TYPE ===================== */
 // Defined here and imported by address.service.ts — single source of truth

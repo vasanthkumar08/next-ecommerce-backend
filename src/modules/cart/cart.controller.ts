@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import * as cartService from "./cart.service";
-import { sendResponse } from "../../utils/response";
-import AppError from "../../utils/AppError";
+import * as cartService from "./cart.service.js";
+import { sendResponse } from "../../utils/response.js";
+import AppError from "../../utils/AppError.js";
 
 /* ===================== ADD ITEM ===================== */
 export const addItem = async (

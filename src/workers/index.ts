@@ -1,8 +1,8 @@
-import "../config/env";
-import "../config/redis";
+import "../config/env.js";
+import "../config/redis.js";
 
-import "./email.worker";
-import "./order.worker";
+import "./email.worker.js";
+import "./order.worker.js";
 
 /**
  * 👷 Worker bootstrap

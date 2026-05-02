@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import * as reviewService from "./review.service";
-import asyncHandler from "../../utils/asyncHandler";
-import { sendResponse } from "../../utils/response";
-import AppError from "../../utils/AppError";
+import * as reviewService from "./review.service.js";
+import asyncHandler from "../../utils/asyncHandler.js";
+import { sendResponse } from "../../utils/response.js";
+import AppError from "../../utils/AppError.js";
 
 const getUserId = (req: Request): string => {
   const userId = req.user?._id;

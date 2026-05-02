@@ -4,15 +4,15 @@ import {
   getMe,
   updateMe,
   changePassword,
-} from "./user.controller";
+} from "./user.controller.js";
 
-import { protect, authorize } from "../../middleware/auth.middleware";
-import { validate } from "../../middleware/validate.middleware";
+import { protect, authorize } from "../../middleware/auth.middleware.js";
+import { validate } from "../../middleware/validate.middleware.js";
 
 import {
   updateProfileSchema,
   changePasswordSchema,
-} from "./user.validator";
+} from "./user.validator.js";
 
 import rateLimit from "express-rate-limit";
 

@@ -6,21 +6,21 @@ import {
   updateItem,
   removeItem,
   clear,
-} from "./cart.controller";
+} from "./cart.controller.js";
 
-import { protect } from "../../middleware/auth.middleware";
-import { validate } from "../../middleware/validate.middleware";
+import { protect } from "../../middleware/auth.middleware.js";
+import { validate } from "../../middleware/validate.middleware.js";
 
 import {
   addToCartValidator,
   updateCartValidator,
   removeItemValidator,
-} from "./cart.validator";
+} from "./cart.validator.js";
 
 import {
   rateLimitMiddleware,
   cartLimiter,
-} from "../../middleware/rateLimiter";
+} from "../../middleware/rateLimiter.js";
 
 const router = express.Router();
 

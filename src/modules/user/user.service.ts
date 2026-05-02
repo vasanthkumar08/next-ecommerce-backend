@@ -1,5 +1,5 @@
-import User from "./user.model";
-import AppError from "../../utils/AppError";
+import User from "./user.model.js";
+import AppError from "../../utils/AppError.js";
 import { Types } from "mongoose";
 
 /* ===================== TYPES ===================== */

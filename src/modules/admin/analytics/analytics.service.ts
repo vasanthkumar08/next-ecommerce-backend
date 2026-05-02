@@ -1,5 +1,5 @@
-import Order from "../../order/order.model";
-import User from "../../user/user.model";
+import Order from "../../order/order.model.js";
+import User from "../../user/user.model.js";
 
 /* ===================== TYPES ===================== */
 interface DailyRevenue {

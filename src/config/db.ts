@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 // ✅ FIX: remove .js extension
-import logger from "../utils/logger";
+import logger from "../utils/logger.js";
 
 dotenv.config();
 

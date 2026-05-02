@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import * as wishlistService from "./wishlist.service";
+import * as wishlistService from "./wishlist.service.js";
 
 /* ===================== TYPES ===================== */
 

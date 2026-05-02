@@ -1,6 +1,6 @@
-import Review from "./review.model";
-import Product from "../product/product.model";
-import AppError from "../../utils/AppError";
+import Review from "./review.model.js";
+import Product from "../product/product.model.js";
+import AppError from "../../utils/AppError.js";
 import { Types } from "mongoose";
 
 /* ===================== TYPES ===================== */

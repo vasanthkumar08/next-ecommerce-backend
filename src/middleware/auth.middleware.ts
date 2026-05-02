@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import User from "../modules/user/user.model";
-import { verifyAccessToken } from "../utils/jwt";
+import User from "../modules/user/user.model.js";
+import { verifyAccessToken } from "../utils/jwt.js";
 
 /**
  * 🔐 Token Payload Type

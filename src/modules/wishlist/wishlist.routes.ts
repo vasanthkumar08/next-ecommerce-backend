@@ -4,9 +4,9 @@ import {
   getWishlist,
   addToWishlist,
   removeFromWishlist,
-} from "./wishlist.controller";
+} from "./wishlist.controller.js";
 
-import { protect } from "../../middleware/auth.middleware";
+import { protect } from "../../middleware/auth.middleware.js";
 
 const router: Router = express.Router();
 

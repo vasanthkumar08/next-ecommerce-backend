@@ -1,6 +1,6 @@
 import express, { Router } from "express";
-import { getDashboard } from "./dashboard.controller";
-import { protect, authorize } from "../../../middleware/auth.middleware";
+import { getDashboard } from "./dashboard.controller.js";
+import { protect, authorize } from "../../../middleware/auth.middleware.js";
 
 const router: Router = express.Router();
 

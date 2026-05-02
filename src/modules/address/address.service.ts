@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
-import Address, { AddressDocument } from "./address.model";
-import AppError from "../../utils/AppError";
+import Address, { AddressDocument } from "./address.model.js";
+import AppError from "../../utils/AppError.js";
 // ✅ Single source of truth — type lives in controller, imported here
-import type { AddressInput } from "./address.controller";
+import type { AddressInput } from "./address.controller.js";
 
 export const addAddress = async (
   userId: string,

@@ -4,10 +4,10 @@ import {
   getAll,
   setDefault,
   remove,
-} from "./address.controller";
+} from "./address.controller.js";
 
-import { protect } from "../../middleware/auth.middleware";
-import { validate } from "../../middleware/validate.middleware";
+import { protect } from "../../middleware/auth.middleware.js";
+import { validate } from "../../middleware/validate.middleware.js";
 
 const router: Router = express.Router();
 

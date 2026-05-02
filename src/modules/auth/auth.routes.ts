@@ -5,17 +5,17 @@ import {
   login,
   refresh,
   logout,
-} from "./auth.controller";
+} from "./auth.controller.js";
 
-import { validate } from "../../middleware/validate.middleware";
-import { registerSchema, loginSchema } from "./auth.validator";
+import { validate } from "../../middleware/validate.middleware.js";
+import { registerSchema, loginSchema } from "./auth.validator.js";
 
 import {
   rateLimitMiddleware,
   authLimiter,
-} from "../../middleware/rateLimiter";
+} from "../../middleware/rateLimiter.js";
 
-import { protect } from "../../middleware/auth.middleware";
+import { protect } from "../../middleware/auth.middleware.js";
 
 const router = express.Router();
 

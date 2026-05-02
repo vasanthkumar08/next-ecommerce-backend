@@ -1,4 +1,4 @@
-import Wishlist from "./wishlist.model";
+import Wishlist from "./wishlist.model.js";
 import { Types } from "mongoose";
 
 /* ===================== TYPES ===================== */

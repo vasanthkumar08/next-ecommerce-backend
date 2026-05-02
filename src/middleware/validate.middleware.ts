@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import AppError from "../utils/AppError";
+import AppError from "../utils/AppError.js";
 
 /**
  * 📦 Validation Schema Type (Joi/Zod compatible shape)

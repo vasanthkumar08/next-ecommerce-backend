@@ -6,20 +6,20 @@ import {
   getMy,
   getOne,
   updateStatus,
-} from "./order.controller";
+} from "./order.controller.js";
 
-import { protect, authorize } from "../../middleware/auth.middleware";
-import { validate } from "../../middleware/validate.middleware";
+import { protect, authorize } from "../../middleware/auth.middleware.js";
+import { validate } from "../../middleware/validate.middleware.js";
 
 import {
   createOrderValidator,
   updateStatusValidator,
-} from "./order.validator";
+} from "./order.validator.js";
 
 import {
   orderLimiter,
   rateLimitMiddleware,
-} from "../../middleware/rateLimiter";
+} from "../../middleware/rateLimiter.js";
 
 const router: Router = express.Router();
 

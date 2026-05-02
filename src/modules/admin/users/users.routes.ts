@@ -1,6 +1,6 @@
 import express, { Router } from "express";
-import { protect, authorize } from "../../../middleware/auth.middleware";
-import { getUserOrders, listUsers, setUserBlocked, setUserRole } from "./users.controller";
+import { protect, authorize } from "../../../middleware/auth.middleware.js";
+import { getUserOrders, listUsers, setUserBlocked, setUserRole } from "./users.controller.js";
 
 const router: Router = express.Router();
 

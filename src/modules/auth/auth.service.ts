@@ -1,11 +1,11 @@
-import User from "../user/user.model";
+import User from "../user/user.model.js";
 import {
   generateAccessToken,
   generateRefreshToken,
   verifyRefreshToken,
-} from "../../utils/jwt";
-import { hashToken } from "../../utils/hash";
-import AppError from "../../utils/AppError";
+} from "../../utils/jwt.js";
+import { hashToken } from "../../utils/hash.js";
+import AppError from "../../utils/AppError.js";
 
 interface RegisterInput {
   name: string;

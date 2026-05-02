@@ -1,6 +1,6 @@
 import { Worker, Job } from "bullmq";
-import redis from "../config/redis";
-import { emailQueue } from "../queues/email.queue";
+import redis from "../config/redis.js";
+import { emailQueue } from "../queues/email.queue.js";
 
 /**
  * 📦 Order Job Data Type

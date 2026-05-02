@@ -1,7 +1,7 @@
-﻿import Order from "../../order/order.model";
-import User from "../../user/user.model";
-import Product from "../../product/product.model";
-import { getCache, setCache } from "../../../utils/cache";
+import Order from "../../order/order.model.js";
+import User from "../../user/user.model.js";
+import Product from "../../product/product.model.js";
+import { getCache, setCache } from "../../../utils/cache.js";
 
 /* ===================== TYPES ===================== */
 interface Revenue {

@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import redis from "../config/redis";
+import redis from "../config/redis.js";
 
 /**
  * 📦 Cached Response Shape
@@ -73,7 +73,7 @@ export const cache = (keyPrefix: string, ttl = 60) => {
 
           redis
             .setex(key, ttl, JSON.stringify(cachePayload))
-            .catch((err) => console.error("Redis cache error:", err));
+            .catch((err: unknown) => console.error("Redis cache error:", err));
         }
 
         return res._originalJson!(body);

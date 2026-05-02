@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import * as analyticsService from "./analytics.service";
+import * as analyticsService from "./analytics.service.js";
 
 /* ===================== DAILY ===================== */
 export const dailyRevenue = async (

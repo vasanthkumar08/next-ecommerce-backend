@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import * as authService from "./auth.service";
-import type { IUser } from "../user/user.model";
+import * as authService from "./auth.service.js";
+import type { IUser } from "../user/user.model.js";
 
 const cookieOptions = {
   httpOnly: true,

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import * as productService from "./product.service";
-import { sendResponse } from "../../utils/response";
-import type { IProduct } from "./product.model";
+import * as productService from "./product.service.js";
+import { sendResponse } from "../../utils/response.js";
+import type { IProduct } from "./product.model.js";
 
 /* ===================== TYPES ===================== */
 

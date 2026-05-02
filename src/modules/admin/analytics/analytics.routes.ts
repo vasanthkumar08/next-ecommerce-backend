@@ -3,10 +3,10 @@ import {
   dailyRevenue,
   monthlyRevenue,
   userGrowth,
-} from "./analytics.controller";
+} from "./analytics.controller.js";
 
 // ✅ FIXED PATH (IMPORTANT)
-import { protect, authorize } from "../../../middleware/auth.middleware";
+import { protect, authorize } from "../../../middleware/auth.middleware.js";
 
 const router: Router = express.Router();
 

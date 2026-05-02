@@ -1,6 +1,6 @@
 import mongoose, { ClientSession } from "mongoose";
-import Cart from "./cart.model";
-import Product from "../product/product.model";
+import Cart from "./cart.model.js";
+import Product from "../product/product.model.js";
 
 /* ===================== TYPES ===================== */
 interface CartItemInput {

@@ -1,11 +1,11 @@
 import Razorpay from "razorpay";
 import crypto from "crypto";
 
-import Order from "../order/order.model";
-import Payment from "./payment.model";
+import Order from "../order/order.model.js";
+import Payment from "./payment.model.js";
 
-import AppError from "../../utils/AppError";
-import env from "../../config/env";
+import AppError from "../../utils/AppError.js";
+import env from "../../config/env.js";
 
 /* ===================== TYPES ===================== */
 
