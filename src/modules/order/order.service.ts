@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import Order from "./order.model.js";
 import Cart from "../cart/cart.model.js";
 import AppError from "../../utils/AppError.js";
+import Product from "../product/product.model.js";
 import type { IProduct } from "../product/product.model.js";
 
 import { validateStock, reserveStock, confirmStock, releaseStock } from "../product/stock.service.js";
@@ -48,16 +49,63 @@ export const createOrder = async (
 
   try {
     if (checkoutItems?.length) {
-      const items = checkoutItems.map((item) => ({
-        product: mongoose.Types.ObjectId.isValid(item.product ?? "")
-          ? item.product
-          : undefined,
-        productId: String(item.productId),
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price,
-        image: item.image ?? "",
+      const itemQuantities = new Map<string, number>();
+
+      for (const item of checkoutItems) {
+        const productId = String(item.product ?? item.productId);
+
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
+          throw new AppError("Invalid product in checkout", 400);
+        }
+
+        if (!Number.isInteger(item.quantity) || item.quantity < 1) {
+          throw new AppError("Invalid checkout quantity", 400);
+        }
+
+        itemQuantities.set(
+          productId,
+          (itemQuantities.get(productId) ?? 0) + item.quantity
+        );
+      }
+
+      const productIds = [...itemQuantities.keys()];
+      const products = await Product.find({
+        _id: { $in: productIds },
+        isActive: true,
+      }).session(session);
+
+      if (products.length !== productIds.length) {
+        throw new AppError("One or more checkout products are unavailable", 400);
+      }
+
+      const productsById = new Map(
+        products.map((product) => [String(product._id), product])
+      );
+
+      const stockItems = productIds.map((productId) => ({
+        product: new mongoose.Types.ObjectId(productId),
+        quantity: itemQuantities.get(productId) ?? 0,
       }));
+
+      await validateStock(stockItems, session);
+      await reserveStock(stockItems, session);
+
+      const items = productIds.map((productId) => {
+        const product = productsById.get(productId);
+
+        if (!product) {
+          throw new AppError("Product unavailable during checkout", 400);
+        }
+
+        return {
+          product: product._id,
+          productId,
+          name: product.name,
+          quantity: itemQuantities.get(productId) ?? 0,
+          price: product.price,
+          image: product.images?.[0]?.url || "",
+        };
+      });
 
       const itemsPrice = items.reduce(
         (sum, item) => sum + item.price * item.quantity,
@@ -87,6 +135,8 @@ export const createOrder = async (
         ],
         { session }
       );
+
+      await Cart.updateOne({ user: userId }, { $set: { items: [] } }, { session });
 
       await session.commitTransaction();
       session.endSession();

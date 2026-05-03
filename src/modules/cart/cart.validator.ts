@@ -16,7 +16,7 @@ export const addToCartValidator = Joi.object({
  */
 export const updateCartValidator = Joi.object({
   productId: Joi.string().required(),
-  quantity: Joi.number().min(1).required(),
+  quantity: Joi.number().min(0).required(),
 }).options({
   abortEarly: false,
   stripUnknown: true,

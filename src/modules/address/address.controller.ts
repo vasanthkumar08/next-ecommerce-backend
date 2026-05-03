@@ -10,7 +10,12 @@ import { AuthRequest } from "../../types/authRequest.js";
 export interface AddressInput {
   name: string;
   phone: string;
+  alternatePhone?: string;
+  houseNumber?: string;
+  apartment?: string;
   addressLine: string;
+  street?: string;
+  landmark?: string;
   city?: string;
   state?: string;
   pincode?: string;
@@ -41,14 +46,50 @@ const parseAddressBody = (body: unknown): AddressInput => {
   if (typeof b.phone !== "string" || b.phone.trim().length === 0) {
     throw new AppError("Phone is required", 400);
   }
-  if (typeof b.addressLine !== "string" || b.addressLine.trim().length === 0) {
+  const addressLine =
+    typeof b.addressLine === "string" && b.addressLine.trim().length > 0
+      ? b.addressLine.trim()
+      : [
+          typeof b.houseNumber === "string" ? b.houseNumber.trim() : "",
+          typeof b.apartment === "string" ? b.apartment.trim() : "",
+          typeof b.street === "string" ? b.street.trim() : "",
+          typeof b.landmark === "string" ? b.landmark.trim() : "",
+        ]
+          .filter(Boolean)
+          .join(", ");
+
+  if (!/^[6-9]\d{9}$/.test(b.phone.trim())) {
+    throw new AppError("Valid 10-digit phone number is required", 400);
+  }
+
+  if (
+    typeof b.alternatePhone === "string" &&
+    b.alternatePhone.trim().length > 0 &&
+    !/^[6-9]\d{9}$/.test(b.alternatePhone.trim())
+  ) {
+    throw new AppError("Valid alternate phone number is required", 400);
+  }
+
+  if (typeof b.pincode === "string" && !/^[1-9][0-9]{5}$/.test(b.pincode.trim())) {
+    throw new AppError("Valid 6-digit postal code is required", 400);
+  }
+
+  if (addressLine.length === 0) {
     throw new AppError("Address line is required", 400);
   }
 
   return {
     name:        b.name.trim(),
     phone:       b.phone.trim(),
-    addressLine: b.addressLine.trim(),
+    alternatePhone:
+      typeof b.alternatePhone === "string" && b.alternatePhone.trim().length > 0
+        ? b.alternatePhone.trim()
+        : undefined,
+    houseNumber: typeof b.houseNumber === "string" ? b.houseNumber.trim() : undefined,
+    apartment:   typeof b.apartment === "string" ? b.apartment.trim() : undefined,
+    addressLine,
+    street:      typeof b.street === "string" ? b.street.trim() : undefined,
+    landmark:    typeof b.landmark === "string" ? b.landmark.trim() : undefined,
     city:        typeof b.city === "string" ? b.city.trim() : undefined,
     state:       typeof b.state === "string" ? b.state.trim() : undefined,
     pincode:     typeof b.pincode === "string" ? b.pincode.trim() : undefined,

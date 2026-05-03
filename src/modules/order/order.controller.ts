@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import mongoose from "mongoose";
 import * as orderService from "./order.service.js";
 import { sendResponse } from "../../utils/response.js";
 import type { IOrder } from "./order.model.js";
@@ -100,6 +101,13 @@ export const getOne = async (
       });
     }
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order ID",
+      });
+    }
+
     const role =
       req.user.role === "admin" || req.user.role === "manager"
         ? req.user.role
@@ -132,6 +140,13 @@ export const updateStatus = async (
       return res.status(400).json({
         success: false,
         message: "Order ID and status required",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order ID",
       });
     }
 
@@ -172,6 +187,13 @@ export const cancel = async (
       return res.status(400).json({
         success: false,
         message: "Order ID required",
+      });
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order ID",
       });
     }
 

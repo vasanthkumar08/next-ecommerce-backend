@@ -5,7 +5,12 @@ export interface AddressDocument extends Document {
   user: mongoose.Types.ObjectId;
   name: string;
   phone: string;
+  alternatePhone?: string;
+  houseNumber?: string;
+  apartment?: string;
   addressLine: string;
+  street?: string;
+  landmark?: string;
   city?: string;
   state?: string;
   pincode?: string;
@@ -43,12 +48,42 @@ const addressSchema: Schema<AddressDocument> = new Schema(
       match: [/^[6-9]\d{9}$/, "Invalid phone number"],
     },
 
+    alternatePhone: {
+      type: String,
+      trim: true,
+      match: [/^$|^[6-9]\d{9}$/, "Invalid alternate phone number"],
+    },
+
+    houseNumber: {
+      type: String,
+      trim: true,
+      maxlength: 80,
+    },
+
+    apartment: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+    },
+
     // 🏠 Address line
     addressLine: {
       type: String,
       required: [true, "Address is required"],
       trim: true,
       maxlength: 200,
+    },
+
+    street: {
+      type: String,
+      trim: true,
+      maxlength: 160,
+    },
+
+    landmark: {
+      type: String,
+      trim: true,
+      maxlength: 160,
     },
 
     // 🌆 Location fields

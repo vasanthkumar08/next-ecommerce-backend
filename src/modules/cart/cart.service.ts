@@ -1,6 +1,7 @@
 import mongoose, { ClientSession } from "mongoose";
 import Cart from "./cart.model.js";
 import Product from "../product/product.model.js";
+import AppError from "../../utils/AppError.js";
 
 /* ===================== TYPES ===================== */
 interface CartItemInput {
@@ -25,7 +26,13 @@ export const addToCart = async (
   productId: string,
   quantity: number
 ) => {
-  if (quantity <= 0) throw new Error("Invalid quantity");
+  if (!mongoose.Types.ObjectId.isValid(productId)) {
+    throw new AppError("Invalid productId", 400);
+  }
+
+  if (!Number.isInteger(quantity) || quantity <= 0) {
+    throw new AppError("Invalid quantity", 400);
+  }
 
   const session: ClientSession = await mongoose.startSession();
   session.startTransaction();
@@ -33,9 +40,9 @@ export const addToCart = async (
   try {
     const product = await Product.findById(productId).session(session);
 
-    if (!product) throw new Error("Product not found");
+    if (!product) throw new AppError("Product not found", 404);
     if (product.stock < quantity) {
-      throw new Error("Insufficient stock");
+      throw new AppError("Insufficient stock", 400);
     }
 
     let cart = await Cart.findOne({ user: userId }).session(session);
@@ -52,7 +59,7 @@ export const addToCart = async (
       const newQty = existingItem.quantity + quantity;
 
       if (product.stock < newQty) {
-        throw new Error("Stock exceeded");
+        throw new AppError("Stock exceeded", 400);
       }
 
       existingItem.quantity = newQty;
@@ -91,11 +98,19 @@ export const updateCartItem = async (
   productId: string,
   quantity: number
 ) => {
+  if (!mongoose.Types.ObjectId.isValid(productId)) {
+    throw new AppError("Invalid productId", 400);
+  }
+
+  if (!Number.isInteger(quantity) || quantity < 0) {
+    throw new AppError("Invalid quantity", 400);
+  }
+
   const cart = await Cart.findOne({ user: userId });
-  if (!cart) throw new Error("Cart not found");
+  if (!cart) throw new AppError("Cart not found", 404);
 
   const item = cart.items.find((i: any) => i.product.toString() === productId);
-  if (!item) throw new Error("Item not found in cart");
+  if (!item) throw new AppError("Item not found in cart", 404);
 
   if (quantity <= 0) {
     cart.items = cart.items.filter(
@@ -111,8 +126,12 @@ export const updateCartItem = async (
 
 /* ===================== REMOVE FROM CART ===================== */
 export const removeFromCart = async (userId: string, productId: string) => {
+  if (!mongoose.Types.ObjectId.isValid(productId)) {
+    throw new AppError("Invalid productId", 400);
+  }
+
   const cart = await Cart.findOne({ user: userId });
-  if (!cart) throw new Error("Cart not found");
+  if (!cart) throw new AppError("Cart not found", 404);
 
   cart.items = cart.items.filter(
     (item: any) => item.product.toString() !== productId
