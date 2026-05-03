@@ -1,13 +1,10 @@
 import mongoose from "mongoose";
-import dotenv from "dotenv";
-// ✅ FIX: remove .js extension
+import env from "./env.js";
 import logger from "../utils/logger.js";
-
-dotenv.config();
 
 const connectDB = async (): Promise<void> => {
   try {
-    const mongoURI = process.env.MONGO_URI as string;
+    const mongoURI = env.MONGO_URI;
     const conn = await mongoose.connect(mongoURI);
     logger.info(`🟢 MongoDB Connected: ${conn.connection.host}`);
 

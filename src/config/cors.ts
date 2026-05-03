@@ -10,7 +10,11 @@ const allowedOrigins = (process.env.CLIENT_URL ?? "http://localhost:3000")
   .map(normalizeOrigin)
   .concat([
     "https://ecommerce-frontend-three-psi.vercel.app",
+    "https://next-ecommerce-frontend-theta.vercel.app",
     "http://localhost:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
   ])
   .filter(Boolean);
 

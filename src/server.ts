@@ -16,7 +16,7 @@ let server: ReturnType<typeof app.listen>;
 
 const bootstrap = async () => {
   // ================= DB =================
-  connectDB();
+  await connectDB();
 
   // ================= GRAPHQL =================
   await setupGraphQL(app);
