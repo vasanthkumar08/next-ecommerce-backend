@@ -1,4 +1,5 @@
 import cors from "cors";
+import { NextFunction, Request, Response } from "express";
 
 const normalizeOrigin = (origin: string | undefined) =>
   String(origin || "")
@@ -58,6 +59,27 @@ export const corsOptions = {
   exposedHeaders: ["X-RateLimit-Limit", "X-RateLimit-Remaining"],
   optionsSuccessStatus: 204,
   preflightContinue: false,
+};
+
+export const setCorsHeaders = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const origin = normalizeOrigin(req.headers.origin as string | undefined);
+
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Vary", "Origin");
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header(
+      "Access-Control-Allow-Methods",
+      "GET,POST,PUT,DELETE,PATCH,OPTIONS"
+    );
+    res.header("Access-Control-Allow-Headers", allowedHeaders.join(","));
+  }
+
+  return next();
 };
 
 export default cors(corsOptions);

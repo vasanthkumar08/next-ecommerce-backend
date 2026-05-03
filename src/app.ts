@@ -2,7 +2,7 @@ import express, { Application } from "express";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 
-import corsMiddleware from "./config/cors.js";
+import corsMiddleware, { setCorsHeaders } from "./config/cors.js";
 import routes from "./routes.js";
 import errorMiddleware from "./middleware/error.middleware.js";
 import { apiLimiter, rateLimitMiddleware } from "./middleware/rateLimiter.js";
@@ -12,6 +12,7 @@ const app: Application = express();
 app.set("trust proxy", 1);
 
 // CORS must run before Helmet, parsers, rate limiters, auth, and routes.
+app.use(setCorsHeaders);
 app.use(corsMiddleware);
 
 // Express 5 does not accept app.options("*", ...); /.*/ is the safe global matcher.
