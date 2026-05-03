@@ -10,7 +10,11 @@ import { apiLimiter, rateLimitMiddleware } from "./middleware/rateLimiter.js";
 const app: Application = express();
 
 app.set("trust proxy", 1);
+
+// CORS must run before Helmet, parsers, rate limiters, auth, and routes.
 app.use(corsMiddleware);
+
+// Express 5 does not accept app.options("*", ...); /.*/ is the safe global matcher.
 app.options(/.*/, corsMiddleware);
 app.use((req, res, next) => {
   if (req.method === "OPTIONS") {

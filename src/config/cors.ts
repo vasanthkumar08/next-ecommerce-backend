@@ -5,6 +5,11 @@ const normalizeOrigin = (origin: string | undefined) =>
     .trim()
     .replace(/\/+$/, "");
 
+const requiredOrigins = [
+  "http://localhost:3000",
+  "https://next-ecommerce-frontend-theta.vercel.app",
+];
+
 const configuredOrigins = [
   process.env.CLIENT_URL,
   process.env.AUTH_URL,
@@ -18,19 +23,15 @@ const allowedOrigins = Array.from(
     (configuredOrigins || "http://localhost:3000")
       .split(",")
       .map(normalizeOrigin)
-      .concat([
-        "http://localhost:3000",
-        "https://next-ecommerce-frontend-theta.vercel.app",
-      ])
+      .concat(requiredOrigins)
       .filter(Boolean)
   )
 );
 
 const allowedHeaders = [
-  "Accept",
-  "Authorization",
   "Content-Type",
-  "Origin",
+  "Authorization",
+  "Accept",
   "X-Auth-Retry",
   "X-CSRF-Token",
   "X-Requested-With",
