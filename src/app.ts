@@ -16,12 +16,13 @@ app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 app.use(cookieParser());
 
-app.use("/api", (req, res, next) => {
+app.use(["/api", "/v1"], (req, res, next) => {
   if (req.method === "OPTIONS") return next();
   return rateLimitMiddleware(apiLimiter)(req, res, next);
 });
 
 app.use("/api", routes);
+app.use(routes);
 app.use(errorMiddleware);
 
 export default app;
