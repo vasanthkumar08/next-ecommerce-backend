@@ -4,10 +4,10 @@ import Joi from "joi";
 
 const orderItemSchema = Joi.object({
   product: Joi.string().hex().length(24).optional(),
-  productId: Joi.alternatives().try(Joi.string(), Joi.number()).required(),
-  quantity: Joi.number().min(1).required(),
-  price: Joi.number().min(0).required(),
-  name: Joi.string().trim().required(),
+  productId: Joi.string().hex().length(24).required(),
+  quantity: Joi.number().integer().min(1).required(),
+  price: Joi.number().min(0).optional(),
+  name: Joi.string().trim().optional(),
   image: Joi.string().allow("").optional(),
 });
 
@@ -27,7 +27,7 @@ export const createOrderValidator = Joi.object({
 
   shippingAddress: shippingAddressSchema.required(),
 
-  totalAmount: Joi.number().min(0).required(),
+  totalAmount: Joi.number().min(0).optional(),
 
   paymentMethod: Joi.string()
     .valid("cod", "credit_card", "debit_card", "upi")
