@@ -9,6 +9,7 @@ const normalizeOrigin = (origin: string | undefined) =>
 const requiredOrigins = [
   "http://localhost:3000",
   "https://next-ecommerce-frontend-theta.vercel.app",
+  "https://next-ecommerce-frontend-git-main-kvasanthk800-7197s-projects.vercel.app",
 ];
 
 const configuredOrigins = [
