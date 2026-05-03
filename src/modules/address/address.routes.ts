@@ -2,6 +2,7 @@ import express, { Router } from "express";
 import {
   add,
   getAll,
+  update,
   setDefault,
   remove,
 } from "./address.controller.js";
@@ -33,6 +34,8 @@ router.get(
   // validate(getAddressValidator),
   getAll
 );
+
+router.put("/:id", update);
 
 /**
  * ⭐ Set Default Address

@@ -34,6 +34,32 @@ export const getAddresses = async (
     .lean();
 };
 
+export const updateAddress = async (
+  userId: string,
+  addressId: string,
+  data: AddressInput
+): Promise<AddressDocument | null> => {
+  const address = await Address.findOne({ _id: addressId, user: userId });
+  if (!address) throw new AppError("Address not found", 404);
+
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== undefined && value !== "") {
+      address.set(key, value);
+    }
+  });
+
+  await address.save();
+
+  if (address.isDefault) {
+    await Address.updateMany(
+      { user: userId, _id: { $ne: address._id } },
+      { isDefault: false }
+    );
+  }
+
+  return address;
+};
+
 export const setDefaultAddress = async (
   userId: string,
   addressId: string

@@ -15,6 +15,7 @@ export interface AddressDocument extends Document {
   state?: string;
   pincode?: string;
   country: string;
+  addressType: "Home" | "Work" | "Office" | "Other";
   isDefault: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -40,18 +41,17 @@ const addressSchema: Schema<AddressDocument> = new Schema(
       maxlength: 50,
     },
 
-    // 📞 Phone validation (India format safe)
     phone: {
       type: String,
       required: [true, "Phone is required"],
       trim: true,
-      match: [/^[6-9]\d{9}$/, "Invalid phone number"],
+      match: [/^\+?[0-9]{7,15}$/, "Invalid phone number"],
     },
 
     alternatePhone: {
       type: String,
       trim: true,
-      match: [/^$|^[6-9]\d{9}$/, "Invalid alternate phone number"],
+      match: [/^$|^\+?[0-9]{7,15}$/, "Invalid alternate phone number"],
     },
 
     houseNumber: {
@@ -99,11 +99,10 @@ const addressSchema: Schema<AddressDocument> = new Schema(
       index: true,
     },
 
-    // 📮 Pincode validation
     pincode: {
       type: String,
       trim: true,
-      match: [/^[1-9][0-9]{5}$/, "Invalid pincode"],
+      match: [/^[A-Za-z0-9][A-Za-z0-9 -]{2,11}$/, "Invalid postal code"],
       index: true,
     },
 
@@ -111,6 +110,13 @@ const addressSchema: Schema<AddressDocument> = new Schema(
       type: String,
       default: "India",
       trim: true,
+    },
+
+    addressType: {
+      type: String,
+      enum: ["Home", "Work", "Office", "Other"],
+      default: "Home",
+      index: true,
     },
 
     // ⭐ Default address flag

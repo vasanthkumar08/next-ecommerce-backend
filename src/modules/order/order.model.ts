@@ -45,11 +45,19 @@ export interface IOrder extends Document {
   };
 
   shippingAddress: {
+    name?: string;
     address: string;
     phone?: string;
+    alternatePhone?: string;
+    houseNumber?: string;
+    apartment?: string;
+    street?: string;
+    landmark?: string;
     city?: string;
+    state?: string;
     pincode?: string;
     country?: string;
+    addressType?: "Home" | "Work" | "Office" | "Other";
   };
 
   paidAt?: Date;
@@ -143,11 +151,23 @@ const orderSchema = new Schema<IOrder>(
     },
 
     shippingAddress: {
+      name: String,
       address: { type: String, required: true },
       phone: String,
+      alternatePhone: String,
+      houseNumber: String,
+      apartment: String,
+      street: String,
+      landmark: String,
       city: String,
+      state: String,
       pincode: String,
       country: String,
+      addressType: {
+        type: String,
+        enum: ["Home", "Work", "Office", "Other"],
+        default: "Home",
+      },
     },
 
     paidAt: Date,

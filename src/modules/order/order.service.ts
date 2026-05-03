@@ -18,11 +18,19 @@ interface CheckoutOrderItem {
 }
 
 interface ShippingAddress {
+  name?: string;
   address: string;
   phone?: string;
+  alternatePhone?: string;
+  houseNumber?: string;
+  apartment?: string;
+  street?: string;
+  landmark?: string;
   city: string;
+  state?: string;
   pincode: string;
   country: string;
+  addressType?: "Home" | "Work" | "Office" | "Other";
 }
 
 type PaymentMethod = "cod" | "credit_card" | "debit_card" | "upi";
