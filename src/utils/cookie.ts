@@ -1,10 +1,12 @@
 import { Response } from "express";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 export const clearRefreshCookie = (res: Response): void => {
   res.clearCookie("refreshToken", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/api/v1/auth",
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+    path: "/",
   });
 };

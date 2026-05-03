@@ -5,18 +5,37 @@ const normalizeOrigin = (origin: string | undefined) =>
     .trim()
     .replace(/\/+$/, "");
 
-const allowedOrigins = (process.env.CLIENT_URL ?? "http://localhost:3000")
-  .split(",")
-  .map(normalizeOrigin)
-  .concat([
-    "https://ecommerce-frontend-three-psi.vercel.app",
-    "https://next-ecommerce-frontend-theta.vercel.app",
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:3001",
-  ])
-  .filter(Boolean);
+const configuredOrigins = [
+  process.env.CLIENT_URL,
+  process.env.AUTH_URL,
+  process.env.FRONTEND_URL,
+]
+  .filter(Boolean)
+  .join(",");
+
+const allowedOrigins = Array.from(
+  new Set(
+    (configuredOrigins || "http://localhost:3000")
+      .split(",")
+      .map(normalizeOrigin)
+      .concat([
+        "http://localhost:3000",
+        "https://next-ecommerce-frontend-theta.vercel.app",
+      ])
+      .filter(Boolean)
+  )
+);
+
+const allowedHeaders = [
+  "Accept",
+  "Authorization",
+  "Content-Type",
+  "Origin",
+  "X-Auth-Retry",
+  "X-CSRF-Token",
+  "X-Requested-With",
+  "Apollo-Require-Preflight",
+];
 
 export const corsOptions = {
   origin: (
@@ -27,16 +46,17 @@ export const corsOptions = {
     if (!origin) return callback(null, true);
 
     if (allowedOrigins.includes(normalizeOrigin(origin))) {
-      callback(null, true);
-    } else {
-      callback(new Error(`CORS blocked: ${origin}`));
+      return callback(null, true);
     }
+
+    return callback(new Error(`CORS blocked: ${origin}`));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "Apollo-Require-Preflight", "X-CSRF-Token"],
+  allowedHeaders,
   exposedHeaders: ["X-RateLimit-Limit", "X-RateLimit-Remaining"],
-  optionsSuccessStatus: 200,
+  optionsSuccessStatus: 204,
+  preflightContinue: false,
 };
 
 export default cors(corsOptions);
