@@ -15,6 +15,13 @@ const orderItemSchema = Joi.object({
 
 const shippingAddressSchema = Joi.object({
   address: Joi.string().trim().required(),
+  phone: Joi.string()
+    .trim()
+    .pattern(/^[6-9]\d{9}$/)
+    .optional()
+    .messages({
+      "string.pattern.base": "Valid 10-digit phone number is required",
+    }),
   city: Joi.string().trim().required(),
   pincode: Joi.string().trim().required(),
   country: Joi.string().trim().required(),

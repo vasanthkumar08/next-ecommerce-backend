@@ -46,6 +46,7 @@ export interface IOrder extends Document {
 
   shippingAddress: {
     address: string;
+    phone?: string;
     city?: string;
     pincode?: string;
     country?: string;
@@ -143,6 +144,7 @@ const orderSchema = new Schema<IOrder>(
 
     shippingAddress: {
       address: { type: String, required: true },
+      phone: String,
       city: String,
       pincode: String,
       country: String,

@@ -19,6 +19,7 @@ interface CheckoutOrderItem {
 
 interface ShippingAddress {
   address: string;
+  phone?: string;
   city: string;
   pincode: string;
   country: string;
