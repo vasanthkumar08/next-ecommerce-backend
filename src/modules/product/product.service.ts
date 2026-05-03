@@ -1,7 +1,7 @@
 import Product from "./product.model.js";
 import type { IProduct } from "./product.model.js";
 import APIFeatures from "../../utils/apiFeatures.js";
-import { getCache, setCache } from "../../utils/cache.js";
+import { deleteCacheByPattern, getCache, setCache } from "../../utils/cache.js";
 
 /* ===================== TYPES ===================== */
 
@@ -78,7 +78,9 @@ export const createProduct = async (
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 
-  return Product.create({ ...data, slug, createdBy });
+  const product = await Product.create({ ...data, slug, createdBy });
+  await deleteCacheByPattern("products:*");
+  return product;
 };
 
 export const getProductById = async (id: string) => {
@@ -89,7 +91,9 @@ export const updateProduct = async (
   id: string,
   data: Record<string, unknown>
 ) => {
-  return Product.findByIdAndUpdate(id, data, { new: true });
+  const product = await Product.findByIdAndUpdate(id, data, { new: true });
+  await deleteCacheByPattern("products:*");
+  return product;
 };
 
 export const deleteProduct = async (id: string) => {
@@ -97,5 +101,6 @@ export const deleteProduct = async (id: string) => {
   if (!product) {
     return { message: "Product not found" };
   }
+  await deleteCacheByPattern("products:*");
   return { message: "Product deleted successfully" };
 };

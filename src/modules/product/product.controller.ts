@@ -14,11 +14,28 @@ interface AuthRequest extends Request {
 
 /* ===================== SANITIZER ===================== */
 
-const sanitizeProduct = (product: IProduct | null) => {
+const toStringId = (value: unknown) => {
+  if (typeof value === "string") return value;
+  if (
+    value &&
+    typeof value === "object" &&
+    "toString" in value &&
+    typeof value.toString === "function"
+  ) {
+    return value.toString();
+  }
+  return "";
+};
+
+type ProductLike = Partial<IProduct> & {
+  _id?: unknown;
+};
+
+const sanitizeProduct = (product: ProductLike | null) => {
   if (!product) return null;
 
   return {
-    id: String(product._id),
+    id: toStringId(product._id),
     name: product.name,
     slug: product.slug,
     sku: product.sku,
