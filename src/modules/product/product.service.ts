@@ -2,7 +2,6 @@ import Product from "./product.model.js";
 import type { IProduct } from "./product.model.js";
 import APIFeatures from "../../utils/apiFeatures.js";
 import { getCache, setCache } from "../../utils/cache.js";
-import logger from "../../utils/logger.js";
 
 /* ===================== TYPES ===================== */
 
@@ -18,64 +17,11 @@ interface ProductResponse {
   pages: number;
 }
 
-interface FakeStoreProduct {
-  id: number;
-  title: string;
-  price: number;
-  description: string;
-  category: string;
-  image: string;
-  rating?: {
-    rate?: number;
-    count?: number;
-  };
-}
-
-const importProductsFromFakeStore = async () => {
-  try {
-    const existingCount = await Product.countDocuments();
-    if (existingCount > 0) return;
-
-    const response = await fetch("https://fakestoreapi.com/products");
-    if (!response.ok) return;
-
-    const products = (await response.json()) as FakeStoreProduct[];
-
-    await Product.insertMany(
-      products.map((product) => ({
-        name: product.title,
-        slug: `${product.title
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, "")}-${product.id}`,
-        description: product.description,
-        price: Math.max(1, Math.round(product.price * 85)),
-        category: product.category,
-        stock: 25,
-        sku: `FAKESTORE-${product.id}`,
-        images: [{ url: product.image, public_id: `fakestore-${product.id}` }],
-        ratings: product.rating?.rate ?? 0,
-        numReviews: product.rating?.count ?? 0,
-        isActive: true,
-      })),
-      { ordered: false }
-    );
-  } catch (error) {
-    logger.warn(
-      error instanceof Error
-        ? `Product seed skipped: ${error.message}`
-        : "Product seed skipped"
-    );
-  }
-};
-
 /* ===================== GET PRODUCTS ===================== */
 
 export const getProducts = async (
   queryString: QueryString
 ): Promise<ProductResponse> => {
-  await importProductsFromFakeStore();
-
   const cacheKey = `products:${JSON.stringify(queryString)}`;
 
   // ⚡ CHECK CACHE FIRST

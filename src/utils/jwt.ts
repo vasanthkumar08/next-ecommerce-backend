@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import env from "../config/env.js";
 
 /* ===================== TYPES ===================== */
 
@@ -31,9 +32,9 @@ export const generateAccessToken = (user: UserPayload): string => {
       sub: user._id,
       role: user.role,
     } as AccessTokenPayload,
-    process.env.JWT_SECRET as string,
+    env.JWT_SECRET,
     {
-      expiresIn: "15m",
+      expiresIn: env.JWT_EXPIRES_IN,
       issuer: "your-app",
       audience: "your-app-users",
     }
@@ -47,9 +48,9 @@ export const generateRefreshToken = (): { token: string; jti: string } => {
 
   const token = jwt.sign(
     { jti },
-    process.env.JWT_REFRESH_SECRET as string,
+    env.JWT_REFRESH_SECRET,
     {
-      expiresIn: "7d",
+      expiresIn: env.JWT_REFRESH_EXPIRES_IN,
       issuer: "your-app",
       audience: "your-app-users",
     }
@@ -61,14 +62,14 @@ export const generateRefreshToken = (): { token: string; jti: string } => {
 /* ===================== VERIFY TOKENS ===================== */
 
 export const verifyAccessToken = (token: string): AccessTokenPayload => {
-  return jwt.verify(token, process.env.JWT_SECRET as string, {
+  return jwt.verify(token, env.JWT_SECRET, {
     issuer: "your-app",
     audience: "your-app-users",
   }) as AccessTokenPayload;
 };
 
 export const verifyRefreshToken = (token: string): RefreshTokenPayload => {
-  return jwt.verify(token, process.env.JWT_REFRESH_SECRET as string, {
+  return jwt.verify(token, env.JWT_REFRESH_SECRET, {
     issuer: "your-app",
     audience: "your-app-users",
   }) as RefreshTokenPayload;

@@ -11,6 +11,7 @@ const requiredEnv: string[] = [
   "MONGO_URI",
   "JWT_SECRET",
   "JWT_REFRESH_SECRET",
+  "REDIS_URL",
 ];
 
 requiredEnv.forEach((key) => {
