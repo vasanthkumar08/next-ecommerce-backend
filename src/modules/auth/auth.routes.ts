@@ -19,6 +19,15 @@ import { protect } from "../../middleware/auth.middleware.js";
 
 const router = express.Router();
 
+const rateLimitWhenRefreshCookieExists = (
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+) => {
+  if (!req.cookies?.refreshToken) return next();
+  return rateLimitMiddleware(authLimiter)(req, res, next);
+};
+
 /* ===================== REGISTER ===================== */
 router.post(
   "/register",
@@ -37,14 +46,14 @@ router.post(
 /* ===================== REFRESH TOKEN ===================== */
 router.post(
   "/refresh",
-  rateLimitMiddleware(authLimiter),
+  rateLimitWhenRefreshCookieExists,
   refresh
 );
 
 /* ===================== LOGOUT ===================== */
 router.post(
   "/logout",
-  rateLimitMiddleware(authLimiter),
+  rateLimitWhenRefreshCookieExists,
   logout
 );
 
