@@ -1,6 +1,7 @@
 import express, { Application } from "express";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
+import mongoSanitize from "express-mongo-sanitize";
 
 import corsMiddleware, { setCorsHeaders } from "./config/cors.js";
 import routes from "./routes.js";
@@ -28,6 +29,7 @@ app.use(helmet());
 app.use(express.json({ limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 app.use(cookieParser());
+app.use(mongoSanitize());
 
 app.use(["/api", "/v1"], (req, res, next) => {
   if (req.method === "OPTIONS") return next();

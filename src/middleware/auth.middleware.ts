@@ -6,6 +6,7 @@ import { verifyAccessToken } from "../utils/jwt.js";
  * 🔐 Token Payload Type
  */
 interface DecodedToken {
+  _id?: string;
   id?: string;
   sub?: string;
   role?: string;
@@ -28,6 +29,10 @@ export const protect = async (
       token = authHeader.split(" ")[1];
     }
 
+    if (!token && ["GET", "HEAD", "OPTIONS"].includes(req.method)) {
+      token = req.cookies?.accessToken;
+    }
+
     if (!token) {
       res.status(401).json({
         success: false,
@@ -39,7 +44,7 @@ export const protect = async (
     const decoded = verifyAccessToken(token) as DecodedToken;
 
     // ✅ Check if user exists
-    const userId = decoded.id ?? decoded.sub;
+    const userId = decoded.sub ?? decoded.id ?? decoded._id;
 
     if (!userId) {
       res.status(401).json({

@@ -29,6 +29,8 @@ interface Env {
 
   // DB
   MONGO_URI: string;
+  MONGO_MAX_POOL_SIZE: number;
+  MONGO_MIN_POOL_SIZE: number;
 
   // JWT
   JWT_SECRET: string;
@@ -66,6 +68,8 @@ const env: Env = {
 
   // DB
   MONGO_URI: process.env.MONGO_URI as string,
+  MONGO_MAX_POOL_SIZE: Number(process.env.MONGO_MAX_POOL_SIZE) || 50,
+  MONGO_MIN_POOL_SIZE: Number(process.env.MONGO_MIN_POOL_SIZE) || 5,
 
   // JWT
   JWT_SECRET: process.env.JWT_SECRET as string,

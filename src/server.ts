@@ -12,7 +12,16 @@ process.on("uncaughtException", (err) => {
   process.exit(1);
 });
 
-let server: ReturnType<typeof app.listen>;
+let server: ReturnType<typeof app.listen> | undefined;
+
+const closeServer = (callback?: () => void) => {
+  if (!server) {
+    callback?.();
+    return;
+  }
+
+  server.close(callback);
+};
 
 const bootstrap = async () => {
   // ================= DB =================
@@ -42,18 +51,18 @@ bootstrap().catch((err) => {
 // ================= ERROR HANDLING =================
 process.on("unhandledRejection", (err) => {
   console.error("❌ Unhandled Rejection:", err);
-  server.close(() => process.exit(1));
+  closeServer(() => process.exit(1));
 });
 
 // ================= SHUTDOWN =================
 process.on("SIGTERM", () => {
   console.log("⚠️ SIGTERM received");
-  server.close(() => console.log("🛑 Server stopped"));
+  closeServer(() => console.log("🛑 Server stopped"));
 });
 
 process.on("SIGINT", () => {
   console.log("⚠️ SIGINT received");
-  server.close(() => console.log("🛑 Server stopped"));
+  closeServer(() => console.log("🛑 Server stopped"));
 });
 
 // ================= WARN FILTER =================
