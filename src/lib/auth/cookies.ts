@@ -12,6 +12,7 @@ export const authCookieNames = {
 const accessMaxAgeMs = 15 * 60 * 1000;
 const refreshMaxAgeMs = 7 * 24 * 60 * 60 * 1000;
 const rememberedRefreshMaxAgeMs = 30 * 24 * 60 * 60 * 1000;
+const authSameSite = isProduction ? "none" : "lax";
 
 export const createCsrfToken = (): string => randomBytes(32).toString("base64url");
 
@@ -19,14 +20,18 @@ export const setAuthCookies = (
   res: Response,
   tokens: { accessToken: string; refreshToken: string; csrfToken?: string },
   rememberMe: boolean
-): void => {
+): string => {
+  const csrfToken = tokens.csrfToken ?? createCsrfToken();
+
   // Tokens are intentionally HTTP-only so XSS cannot directly read bearer
   // credentials. The non-HTTP-only CSRF cookie is a double-submit nonce, not a
-  // credential, and is safe for the browser to echo in a header.
+  // credential. In cross-site deployments (Vercel frontend + Render API), the
+  // browser will only send these cookies on XHR/fetch when SameSite=None and
+  // Secure=true are used together.
   res.cookie(authCookieNames.access, tokens.accessToken, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: "lax",
+    sameSite: authSameSite,
     path: "/",
     maxAge: accessMaxAgeMs,
   });
@@ -34,18 +39,20 @@ export const setAuthCookies = (
   res.cookie(authCookieNames.refresh, tokens.refreshToken, {
     httpOnly: true,
     secure: isProduction,
-    sameSite: "strict",
+    sameSite: authSameSite,
     path: "/",
     maxAge: rememberMe ? rememberedRefreshMaxAgeMs : refreshMaxAgeMs,
   });
 
-  res.cookie(authCookieNames.csrf, tokens.csrfToken ?? createCsrfToken(), {
+  res.cookie(authCookieNames.csrf, csrfToken, {
     httpOnly: false,
     secure: isProduction,
-    sameSite: "lax",
+    sameSite: authSameSite,
     path: "/",
     maxAge: rememberMe ? rememberedRefreshMaxAgeMs : refreshMaxAgeMs,
   });
+
+  return csrfToken;
 };
 
 export const clearAuthCookies = (res: Response): void => {
@@ -54,7 +61,7 @@ export const clearAuthCookies = (res: Response): void => {
     path: "/",
   };
 
-  res.clearCookie(authCookieNames.access, { ...base, sameSite: "lax" });
-  res.clearCookie(authCookieNames.refresh, { ...base, sameSite: "strict" });
-  res.clearCookie(authCookieNames.csrf, { ...base, sameSite: "lax" });
+  res.clearCookie(authCookieNames.access, { ...base, sameSite: authSameSite });
+  res.clearCookie(authCookieNames.refresh, { ...base, sameSite: authSameSite });
+  res.clearCookie(authCookieNames.csrf, { ...base, sameSite: authSameSite });
 };

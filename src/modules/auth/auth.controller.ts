@@ -27,7 +27,7 @@ const sendAuthResponse = (
     rememberMe: boolean;
   }
 ) => {
-  setAuthCookies(
+  const csrfToken = setAuthCookies(
     res,
     {
       accessToken: auth.accessToken,
@@ -42,6 +42,7 @@ const sendAuthResponse = (
     success: true,
     message,
     accessToken: auth.accessToken,
+    csrfToken,
     user: auth.user,
   });
 };
@@ -118,11 +119,23 @@ export const refresh = async (
     const token = req.cookies?.[authCookieNames.refresh];
 
     if (typeof token !== "string") {
+      console.info("auth_refresh_cookie_missing", {
+        requestId: req.requestId,
+        origin: req.headers.origin,
+        hasCookieHeader: typeof req.headers.cookie === "string",
+      });
+
       return res.status(401).json({
         success: false,
         message: "No refresh token",
       });
     }
+
+    console.info("auth_refresh_started", {
+      requestId: req.requestId,
+      origin: req.headers.origin,
+      hasRefreshCookie: true,
+    });
 
     const auth = await authService.refreshTokenService(
       token,
