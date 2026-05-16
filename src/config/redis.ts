@@ -36,7 +36,7 @@ if (!global._redis) {
   });
 
   global._redis.on("error", (err: Error) => {
-    console.error("❌ Redis Error:", err.message);
+    console.error("❌ Redis Error:", err.message); 
   });
 
   global._redis.on("reconnecting", () => {
