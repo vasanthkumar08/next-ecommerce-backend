@@ -1,6 +1,7 @@
 import "../config/env.js";
 import "../config/redis.js";
 
+import "../jobs/cleanUpJob.js";
 import "./email.worker.js";
 import "./order.worker.js";
 

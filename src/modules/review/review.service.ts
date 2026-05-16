@@ -64,6 +64,10 @@ export const addReview = async (userId: UserId, data: ReviewInput) => {
 /* ===================== GET REVIEWS ===================== */
 
 export const getReviews = async (productId: ProductId) => {
+  if (!Types.ObjectId.isValid(productId.toString())) {
+    throw new AppError("Invalid productId", 400);
+  }
+
   const reviews = await Review.find({ product: productId })
     .populate("user", "name avatar")
     .sort("-createdAt");

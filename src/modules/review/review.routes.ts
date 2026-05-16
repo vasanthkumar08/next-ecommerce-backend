@@ -13,20 +13,7 @@ import { validate } from "../../middleware/validate.middleware.js";
 
 const router: Router = express.Router();
 
-/* ===================== GLOBAL AUTH ===================== */
-
-router.use(protect);
-
 /* ===================== ROUTES ===================== */
-
-/**
- * ➕ Create or Update Review
- */
-router.post(
-  "/",
-  // validate(addReviewValidator),
-  add
-);
 
 /**
  * 📥 Get all reviews for a product
@@ -38,10 +25,21 @@ router.get(
 );
 
 /**
+ * ➕ Create or Update Review
+ */
+router.post(
+  "/",
+  protect,
+  // validate(addReviewValidator),
+  add
+);
+
+/**
  * ❌ Delete review
  */
 router.delete(
   "/:id",
+  protect,
   // validate(deleteReviewValidator),
   remove
 );

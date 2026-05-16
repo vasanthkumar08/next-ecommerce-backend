@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 import Order from "./order.model.js";
 import Cart from "../cart/cart.model.js";
+import { invalidateCartCache } from "../cart/cart.service.js";
 import AppError from "../../utils/AppError.js";
 import Product from "../product/product.model.js";
 import type { IProduct } from "../product/product.model.js";
@@ -59,6 +60,13 @@ const stockManagedItems = (
 const reservationTtlMs = 15 * 60 * 1000;
 
 const reservationExpiresAt = () => new Date(Date.now() + reservationTtlMs);
+
+const clearUserCart = async (
+  userId: string | mongoose.Types.ObjectId,
+  session: mongoose.ClientSession
+) => {
+  await Cart.updateOne({ user: userId }, { $set: { items: [] } }, { session });
+};
 
 /* ===================== CREATE ORDER (ATOMIC SAFE) ===================== */
 
@@ -174,10 +182,16 @@ export const createOrder = async (
         { session }
       );
 
-      await Cart.updateOne({ user: userId }, { $set: { items: [] } }, { session });
+      if (isCod) {
+        await clearUserCart(userId, session);
+      }
 
       await session.commitTransaction();
       session.endSession();
+
+      if (isCod) {
+        await invalidateCartCache(userId);
+      }
 
       return order;
     }
@@ -247,11 +261,17 @@ export const createOrder = async (
     );
 
     /* ===================== CLEAR CART ===================== */
-    cart.items = [];
-    await cart.save({ session });
+    if (isCod) {
+      cart.items = [];
+      await cart.save({ session });
+    }
 
     await session.commitTransaction();
     session.endSession();
+
+    if (isCod) {
+      await invalidateCartCache(userId);
+    }
 
     return order[0];
   } catch (err) {
@@ -313,6 +333,7 @@ export const confirmOrderPayment = async (
 
     /* ===================== FINAL STOCK CONFIRM ===================== */
     await confirmStock(stockManagedItems(order.items), session);
+    await clearUserCart(order.user, session);
 
     order.status = "paid";
     order.isPaid = true;
@@ -333,6 +354,8 @@ export const confirmOrderPayment = async (
 
     await session.commitTransaction();
     session.endSession();
+
+    await invalidateCartCache(order.user.toString());
 
     return order;
   } catch (err) {
@@ -466,4 +489,60 @@ export const updateOrderStatus = async (orderId: string, status: string) => {
 
   await order.save();
   return order;
+};
+
+export const releaseExpiredReservations = async (limit = 50) => {
+  const expiredOrders = await Order.find({
+    isPaid: false,
+    status: "pending",
+    stockReservationExpiresAt: { $lte: new Date() },
+  })
+    .sort({ stockReservationExpiresAt: 1 })
+    .limit(limit);
+
+  let released = 0;
+
+  for (const expiredOrder of expiredOrders) {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const order = await Order.findOne({
+        _id: expiredOrder._id,
+        isPaid: false,
+        status: "pending",
+        stockReservationExpiresAt: { $lte: new Date() },
+      }).session(session);
+
+      if (!order) {
+        await session.commitTransaction();
+        session.endSession();
+        continue;
+      }
+
+      await releaseStock(stockManagedItems(order.items), session);
+
+      order.status = "cancelled";
+      order.cancelledAt = new Date();
+      order.stockReservationExpiresAt = undefined;
+      order.paymentInfo = {
+        ...order.paymentInfo,
+        status: "failed",
+      };
+
+      await order.save({ session });
+      await session.commitTransaction();
+      session.endSession();
+      released += 1;
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      console.error("expired_reservation_release_failed", {
+        orderId: expiredOrder._id.toString(),
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  }
+
+  return { scanned: expiredOrders.length, released };
 };

@@ -39,6 +39,15 @@ const cacheCart = async (userId: string, cart: unknown): Promise<void> => {
   }
 };
 
+export const invalidateCartCache = async (userId: string): Promise<void> => {
+  try {
+    await redis.del(getCartCacheKey(userId));
+  } catch {
+    // MongoDB is the durable cart source; cache invalidation failures should
+    // never break order/payment completion.
+  }
+};
+
 const readCachedCart = async <T>(userId: string): Promise<T | null> => {
   try {
     const cached = await redis.get(getCartCacheKey(userId));
