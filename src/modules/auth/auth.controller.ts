@@ -144,6 +144,10 @@ export const refresh = async (
 
     return sendAuthResponse(res, 200, "Session refreshed", auth);
   } catch (err) {
+    if (err instanceof AppError && err.code === "REFRESH_ROTATION_IN_PROGRESS") {
+      return next(err);
+    }
+
     clearAuthCookies(res);
     next(err);
   }

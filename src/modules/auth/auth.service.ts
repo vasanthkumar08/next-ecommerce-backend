@@ -21,6 +21,7 @@ const accessTokenTtlSeconds = 15 * 60;
 const standardSessionTtlSeconds = 7 * 24 * 60 * 60;
 const rememberedSessionTtlSeconds = 30 * 24 * 60 * 60;
 const otpTtlSeconds = 15 * 60;
+const refreshRotationRaceGraceMs = 5_000;
 
 interface AuthResult {
   user: PublicUser;
@@ -55,6 +56,13 @@ const deviceIdFromContext = (context: RequestContext): string =>
     .createHash("sha256")
     .update(`${context.userAgent}:${context.ip}`)
     .digest("hex");
+
+const isRecentRotationRace = (rotatedAt?: Date): boolean =>
+  Boolean(
+    rotatedAt &&
+      Date.now() - rotatedAt.getTime() >= 0 &&
+      Date.now() - rotatedAt.getTime() <= refreshRotationRaceGraceMs
+  );
 
 const createTokenPair = (user: IUser, sessionId: string, tokenId: string) => {
   const accessToken = generateAccessToken({
@@ -286,6 +294,28 @@ export const refreshTokenService = async (
   const tokenMatches =
     storedToken?.tokenHash && safeEqual(storedToken.tokenHash, incomingHash);
 
+  if (
+    storedToken &&
+    storedToken.status === "rotated" &&
+    tokenMatches &&
+    isRecentRotationRace(storedToken.rotatedAt)
+  ) {
+    await writeAuditLog({
+      userId: session.user,
+      action: "REFRESH_ROTATION_RACE",
+      context,
+      metadata: {
+        sessionId: session._id.toString(),
+        tokenId: decoded.jti,
+        replacedByTokenId: storedToken.replacedByTokenId ?? null,
+      },
+    });
+
+    throw new AppError("Refresh already rotated", 409, {
+      code: "REFRESH_ROTATION_IN_PROGRESS",
+    });
+  }
+
   if (!storedToken || storedToken.status !== "active" || !tokenMatches) {
     // Refresh reuse means an already-rotated token appeared again. Treat that as
     // credential theft and revoke every active session for the account.
@@ -330,25 +360,81 @@ export const refreshTokenService = async (
     nextRefreshTokenId
   );
 
-  session.refreshTokenId = nextRefreshTokenId;
-  session.lastActiveAt = new Date();
-  session.expiresAt = expiryFromNow(ttl);
-  session.ipAddress = context.ip;
-  session.userAgent = context.userAgent;
+  const now = new Date();
+  const nextExpiresAt = expiryFromNow(ttl);
 
-  storedToken.status = "rotated";
-  storedToken.rotatedAt = new Date();
-  storedToken.replacedByTokenId = nextRefreshTokenId;
+  const rotateResult = await RefreshToken.updateOne(
+    {
+      _id: storedToken._id,
+      session: session._id,
+      tokenId: decoded.jti,
+      tokenHash: incomingHash,
+      status: "active",
+    },
+    {
+      $set: {
+        status: "rotated",
+        rotatedAt: now,
+        replacedByTokenId: nextRefreshTokenId,
+      },
+    }
+  );
+
+  if (rotateResult.modifiedCount !== 1) {
+    const racedToken = await RefreshToken.findOne({
+      tokenId: decoded.jti,
+      session: session._id,
+    });
+
+    if (
+      racedToken &&
+      racedToken.status === "rotated" &&
+      racedToken.tokenHash &&
+      safeEqual(racedToken.tokenHash, incomingHash) &&
+      isRecentRotationRace(racedToken.rotatedAt)
+    ) {
+      await writeAuditLog({
+        userId: session.user,
+        action: "REFRESH_ROTATION_RACE",
+        context,
+        metadata: {
+          sessionId: session._id.toString(),
+          tokenId: decoded.jti,
+          replacedByTokenId: racedToken.replacedByTokenId ?? null,
+        },
+      });
+
+      throw new AppError("Refresh already rotated", 409, {
+        code: "REFRESH_ROTATION_IN_PROGRESS",
+      });
+    }
+
+    throw new AppError("Refresh token expired or invalid", 401);
+  }
 
   await Promise.all([
-    session.save(),
-    storedToken.save(),
+    AuthSession.updateOne(
+      {
+        _id: session._id,
+        status: "active",
+        refreshTokenId: decoded.jti,
+      },
+      {
+        $set: {
+          refreshTokenId: nextRefreshTokenId,
+          lastActiveAt: now,
+          expiresAt: nextExpiresAt,
+          ipAddress: context.ip,
+          userAgent: context.userAgent,
+        },
+      }
+    ),
     RefreshToken.create({
       user: user._id,
       session: session._id,
       tokenId: nextRefreshTokenId,
       tokenHash: hashToken(refreshToken),
-      expiresAt: expiryFromNow(ttl),
+      expiresAt: nextExpiresAt,
     }),
     cacheSession(
       session._id.toString(),
