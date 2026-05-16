@@ -39,6 +39,7 @@ const allowedHeaders = [
   "X-CSRF-Token",
   "X-Requested-With",
   "Apollo-Require-Preflight",
+  "Idempotency-Key",
 ];
 
 export const corsOptions = {
@@ -58,7 +59,11 @@ export const corsOptions = {
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders,
-  exposedHeaders: ["X-RateLimit-Limit", "X-RateLimit-Remaining"],
+  exposedHeaders: [
+    "X-Request-Id",
+    "X-RateLimit-Limit",
+    "X-RateLimit-Remaining",
+  ],
   optionsSuccessStatus: 204,
   preflightContinue: false,
 };

@@ -34,6 +34,17 @@ interface ShippingAddress {
 }
 
 type PaymentMethod = "cod" | "credit_card" | "debit_card" | "upi";
+type OrderActorRole = "user" | "admin" | "moderator" | "manager";
+
+interface ConfirmPaymentInput {
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  method?: string;
+}
+
+interface CreateOrderOptions {
+  idempotencyKey?: string;
+}
 
 const stockManagedItems = (
   items: Array<{ product?: mongoose.Types.ObjectId; quantity: number }>
@@ -45,14 +56,25 @@ const stockManagedItems = (
     )
     .map((item) => ({ product: item.product, quantity: item.quantity }));
 
+const reservationTtlMs = 15 * 60 * 1000;
+
+const reservationExpiresAt = () => new Date(Date.now() + reservationTtlMs);
+
 /* ===================== CREATE ORDER (ATOMIC SAFE) ===================== */
 
 export const createOrder = async (
   userId: string,
   shippingAddress: ShippingAddress,
   paymentMethod: PaymentMethod,
-  checkoutItems?: CheckoutOrderItem[]
+  checkoutItems?: CheckoutOrderItem[],
+  options: CreateOrderOptions = {}
 ) => {
+  const idempotencyKey = options.idempotencyKey?.trim();
+  if (idempotencyKey) {
+    const existing = await Order.findOne({ user: userId, idempotencyKey });
+    if (existing) return existing;
+  }
+
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -98,6 +120,11 @@ export const createOrder = async (
 
       await validateStock(stockItems, session);
       await reserveStock(stockItems, session);
+      const isCod = paymentMethod === "cod";
+
+      if (isCod) {
+        await confirmStock(stockItems, session);
+      }
 
       const items = productIds.map((productId) => {
         const product = productsById.get(productId);
@@ -133,11 +160,13 @@ export const createOrder = async (
             taxPrice,
             shippingPrice,
             totalAmount,
+            idempotencyKey,
+            stockReservationExpiresAt: isCod ? undefined : reservationExpiresAt(),
             shippingAddress,
-            status: paymentMethod === "cod" ? "confirmed" : "pending",
+            status: isCod ? "confirmed" : "pending",
             paymentInfo: {
               provider: paymentMethod === "upi" ? "razorpay" : paymentMethod,
-              status: paymentMethod === "cod" ? "success" : "pending",
+              status: isCod ? "success" : "pending",
               method: paymentMethod,
             },
           },
@@ -166,6 +195,11 @@ export const createOrder = async (
 
     /* ===================== STEP 2: RESERVE STOCK ===================== */
     await reserveStock(cart.items, session);
+    const isCod = paymentMethod === "cod";
+
+    if (isCod) {
+      await confirmStock(cart.items, session);
+    }
 
     const items = [];
     let itemsPrice = 0;
@@ -198,13 +232,15 @@ export const createOrder = async (
           taxPrice,
           shippingPrice,
           totalAmount,
+          idempotencyKey,
+          stockReservationExpiresAt: isCod ? undefined : reservationExpiresAt(),
           shippingAddress,
           paymentInfo: {
             provider: paymentMethod === "upi" ? "razorpay" : paymentMethod,
-            status: paymentMethod === "cod" ? "success" : "pending",
+            status: isCod ? "success" : "pending",
             method: paymentMethod,
           },
-          status: "pending",
+          status: isCod ? "confirmed" : "pending",
         },
       ],
       { session }
@@ -221,28 +257,77 @@ export const createOrder = async (
   } catch (err) {
     await session.abortTransaction();
     session.endSession();
+    if (
+      idempotencyKey &&
+      typeof err === "object" &&
+      err !== null &&
+      "code" in err &&
+      (err as { code?: number }).code === 11000
+    ) {
+      const existing = await Order.findOne({ user: userId, idempotencyKey });
+      if (existing) return existing;
+    }
     throw err;
   }
 };
 
 /* ===================== CONFIRM PAYMENT ===================== */
 
-export const confirmOrderPayment = async (orderId: string) => {
+export const confirmOrderPayment = async (
+  orderId: string,
+  payment?: ConfirmPaymentInput
+) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const order = await Order.findById(orderId).session(session);
+    const order = await Order.findOneAndUpdate(
+      {
+        _id: orderId,
+        isPaid: false,
+        status: { $in: ["pending", "confirmed"] },
+        "paymentInfo.status": { $ne: "success" },
+      },
+      {
+        $set: {
+          status: "processing",
+          "paymentInfo.razorpayOrderId": payment?.razorpayOrderId,
+          "paymentInfo.razorpayPaymentId": payment?.razorpayPaymentId,
+          "paymentInfo.method": payment?.method ?? "razorpay",
+        },
+      },
+      { new: true, session }
+    );
 
-    if (!order) throw new AppError("Order not found", 404);
+    if (!order) {
+      const existing = await Order.findById(orderId).session(session);
+      if (!existing) throw new AppError("Order not found", 404);
+      if (existing.status === "paid" || existing.isPaid) {
+      await session.commitTransaction();
+      session.endSession();
+        return existing;
+      }
 
-    if (order.status === "paid") return order;
+      throw new AppError("Order is not payable in its current state", 409);
+    }
 
     /* ===================== FINAL STOCK CONFIRM ===================== */
     await confirmStock(stockManagedItems(order.items), session);
 
     order.status = "paid";
+    order.isPaid = true;
     order.paidAt = new Date();
+    order.paymentInfo = {
+      ...order.paymentInfo,
+      provider: "razorpay",
+      razorpayOrderId:
+        payment?.razorpayOrderId ?? order.paymentInfo.razorpayOrderId,
+      razorpayPaymentId:
+        payment?.razorpayPaymentId ?? order.paymentInfo.razorpayPaymentId,
+      status: "success",
+      method: payment?.method ?? order.paymentInfo.method ?? "razorpay",
+    };
+    order.stockReservationExpiresAt = undefined;
 
     await order.save({ session });
 
@@ -264,18 +349,47 @@ export const cancelOrder = async (orderId: string) => {
   session.startTransaction();
 
   try {
-    const order = await Order.findById(orderId).session(session);
+    const order = await Order.findOneAndUpdate(
+      {
+        _id: orderId,
+        isDelivered: false,
+        status: { $nin: ["cancelled", "refunded", "processing"] },
+      },
+      {
+        $set: {
+          status: "cancelled",
+          cancelledAt: new Date(),
+        },
+      },
+      { new: true, session }
+    );
 
-    if (!order) throw new AppError("Order not found", 404);
+    if (!order) {
+      const existing = await Order.findById(orderId).session(session);
+      if (!existing) throw new AppError("Order not found", 404);
 
-    if (order.isDelivered) {
+      if (existing.isDelivered) {
       throw new AppError("Order already delivered", 400);
     }
 
-    /* ===================== RELEASE STOCK ===================== */
-    await releaseStock(stockManagedItems(order.items), session);
+      if (existing.status === "cancelled" || existing.status === "refunded") {
+      await session.commitTransaction();
+      session.endSession();
+      return { id: orderId };
+    }
 
-    await order.deleteOne({ session });
+      throw new AppError("Order is currently being processed", 409);
+    }
+
+    if (!order.isPaid) {
+      await releaseStock(stockManagedItems(order.items), session);
+    }
+
+    order.status = order.isPaid ? "refunded" : "cancelled";
+    order.paymentInfo.status = order.isPaid ? "success" : "failed";
+    order.stockReservationExpiresAt = undefined;
+
+    await order.save({ session });
 
     await session.commitTransaction();
     session.endSession();
@@ -296,7 +410,7 @@ export const getMyOrders = async (userId: string) => {
 /* ===================== GET ORDER BY ID ===================== */
 export const getOrderById = async (
   orderId: string,
-  user: { _id: string; role: "user" | "admin" | "manager" }
+  user: { _id: string; role: OrderActorRole }
 ) => {
   const order = await Order.findById(orderId);
 
@@ -304,7 +418,12 @@ export const getOrderById = async (
     throw new AppError("Order not found", 404);
   }
 
-  if (user.role !== "admin" && order.user.toString() !== user._id) {
+  if (
+    user.role !== "admin" &&
+    user.role !== "manager" &&
+    user.role !== "moderator" &&
+    order.user.toString() !== user._id
+  ) {
     throw new AppError("Not authorized to view this order", 403);
   }
 

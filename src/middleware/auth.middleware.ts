@@ -1,16 +1,6 @@
 import { Request, Response, NextFunction } from "express";
-import User from "../modules/user/user.model.js";
-import { verifyAccessToken } from "../utils/jwt.js";
-
-/**
- * 🔐 Token Payload Type
- */
-interface DecodedToken {
-  _id?: string;
-  id?: string;
-  sub?: string;
-  role?: string;
-}
+import { authCookieNames } from "../lib/auth/cookies.js";
+import { resolveAuthSessionFromToken } from "../lib/auth/resolveSession.js";
 
 /**
  * 🔐 Protect Middleware (Authentication)
@@ -29,8 +19,8 @@ export const protect = async (
       token = authHeader.split(" ")[1];
     }
 
-    if (!token && ["GET", "HEAD", "OPTIONS"].includes(req.method)) {
-      token = req.cookies?.accessToken;
+    if (!token && typeof req.cookies?.[authCookieNames.access] === "string") {
+      token = req.cookies[authCookieNames.access];
     }
 
     if (!token) {
@@ -41,41 +31,21 @@ export const protect = async (
       return;
     }
 
-    const decoded = verifyAccessToken(token) as DecodedToken;
+    const authSession = await resolveAuthSessionFromToken(token);
 
-    // ✅ Check if user exists
-    const userId = decoded.sub ?? decoded.id ?? decoded._id;
-
-    if (!userId) {
+    if (!authSession) {
       res.status(401).json({
         success: false,
-        message: "Invalid token payload",
-      });
-      return;
-    }
-
-    const user = await User.findById(userId).select("-password");
-
-    if (!user) {
-      res.status(401).json({
-        success: false,
-        message: "User no longer exists",
-      });
-      return;
-    }
-
-    if (user.isBlocked) {
-      res.status(403).json({
-        success: false,
-        message: "Your account has been blocked",
+        message: "Session expired",
       });
       return;
     }
 
     req.user = {
-      _id: user._id.toString(),
-      role: user.role,
-      email: user.email,
+      _id: authSession.userId,
+      role: authSession.role,
+      email: authSession.email,
+      sessionId: authSession.sessionId,
     };
 
     next();

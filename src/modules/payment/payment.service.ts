@@ -3,6 +3,7 @@ import crypto from "crypto";
 
 import Order from "../order/order.model.js";
 import Payment from "./payment.model.js";
+import { confirmOrderPayment } from "../order/order.service.js";
 
 import AppError from "../../utils/AppError.js";
 import env from "../../config/env.js";
@@ -15,6 +16,14 @@ interface VerifyPaymentData {
   razorpay_payment_id: string;
   razorpay_signature: string;
 }
+
+const safeEqual = (left: string, right: string): boolean => {
+  const leftBuffer = Buffer.from(left);
+  const rightBuffer = Buffer.from(right);
+
+  if (leftBuffer.length !== rightBuffer.length) return false;
+  return crypto.timingSafeEqual(leftBuffer, rightBuffer);
+};
 
 /* ===================== SAFETY CHECK ===================== */
 
@@ -48,6 +57,72 @@ export const createRazorpayOrder = async (
     throw new AppError("Order already paid", 400);
   }
 
+  if (order.status !== "pending" && order.status !== "confirmed") {
+    throw new AppError("Order is not payable in its current state", 409);
+  }
+
+  const existingPayment = await Payment.findOne({ order: orderId });
+  if (existingPayment?.razorpayOrderId) {
+    return {
+      id: existingPayment.razorpayOrderId,
+      amount: Math.round(existingPayment.amount * 100),
+      currency: existingPayment.currency,
+      receipt: order._id.toString(),
+    };
+  }
+
+  if (existingPayment?.status === "creating") {
+    throw new AppError("Payment creation already in progress", 409);
+  }
+
+  if (existingPayment?.status === "failed" && !existingPayment.razorpayOrderId) {
+    const lock = await Payment.updateOne(
+      { _id: existingPayment._id, status: "failed" },
+      {
+        status: "creating",
+        amount: order.totalAmount,
+        currency: order.currency,
+        error: undefined,
+      }
+    );
+
+    if (lock.modifiedCount !== 1) {
+      throw new AppError("Payment creation already in progress", 409);
+    }
+  } else if (!existingPayment) {
+    try {
+      await Payment.create({
+        user: userId,
+        order: orderId,
+        amount: order.totalAmount,
+        currency: order.currency,
+        status: "creating",
+      });
+    } catch (error) {
+      const duplicatePayment =
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error &&
+        (error as { code?: number }).code === 11000;
+
+      if (!duplicatePayment) throw error;
+
+      const payment = await Payment.findOne({ order: orderId });
+      if (payment?.razorpayOrderId) {
+        return {
+          id: payment.razorpayOrderId,
+          amount: Math.round(payment.amount * 100),
+          currency: payment.currency,
+          receipt: order._id.toString(),
+        };
+      }
+
+      throw new AppError("Payment creation already in progress", 409);
+    }
+  } else {
+    throw new AppError("Payment record is not retryable", 409);
+  }
+
   const options = {
     amount: Math.round(order.totalAmount * 100),
     currency: "INR",
@@ -55,7 +130,23 @@ export const createRazorpayOrder = async (
     payment_capture: 1,
   };
 
-  const razorpayOrder = await razorpay.orders.create(options);
+  let razorpayOrder;
+  try {
+    razorpayOrder = await razorpay.orders.create(options);
+  } catch (error) {
+    await Payment.findOneAndUpdate(
+      { order: orderId, status: "creating" },
+      {
+        status: "failed",
+        error: {
+          code: "razorpay_order_create_failed",
+          description:
+            error instanceof Error ? error.message : "Razorpay order creation failed",
+        },
+      }
+    );
+    throw error;
+  }
 
   // 💳 create or update payment record (idempotent safe)
   await Payment.findOneAndUpdate(
@@ -64,11 +155,21 @@ export const createRazorpayOrder = async (
       user: userId,
       order: orderId,
       amount: order.totalAmount,
+      currency: order.currency,
       razorpayOrderId: razorpayOrder.id,
       status: "created",
     },
     { upsert: true, new: true }
   );
+
+  order.paymentInfo = {
+    ...order.paymentInfo,
+    provider: "razorpay",
+    razorpayOrderId: razorpayOrder.id,
+    status: "pending",
+    method: order.paymentInfo.method ?? "razorpay",
+  };
+  await order.save();
 
   return razorpayOrder;
 };
@@ -95,8 +196,15 @@ export const verifyPayment = async (
   }
 
   // 🔥 idempotency protection
-  if (order.status === "paid") {
+  if (order.status === "paid" || order.isPaid) {
     return { message: "Already verified" };
+  }
+
+  if (
+    order.paymentInfo.razorpayOrderId &&
+    order.paymentInfo.razorpayOrderId !== razorpay_order_id
+  ) {
+    throw new AppError("Payment order does not match checkout order", 400);
   }
 
   /* ===================== SIGNATURE CHECK ===================== */
@@ -113,14 +221,18 @@ export const verifyPayment = async (
     .update(body)
     .digest("hex");
 
-  if (expectedSignature !== razorpay_signature) {
+  if (!safeEqual(expectedSignature, razorpay_signature)) {
     throw new AppError("Invalid payment signature", 400);
   }
 
   /* ===================== UPDATE PAYMENT ===================== */
 
   const payment = await Payment.findOneAndUpdate(
-    { razorpayOrderId: razorpay_order_id },
+    {
+      order: orderId,
+      razorpayOrderId: razorpay_order_id,
+      amount: order.totalAmount,
+    },
     {
       razorpayPaymentId: razorpay_payment_id,
       razorpaySignature: razorpay_signature,
@@ -133,23 +245,14 @@ export const verifyPayment = async (
     throw new AppError("Payment record not found", 404);
   }
 
-  /* ===================== UPDATE ORDER ===================== */
-
-  order.status = "paid";
-  order.paymentInfo = {
-    provider: "razorpay",
+  const confirmedOrder = await confirmOrderPayment(orderId, {
     razorpayOrderId: razorpay_order_id,
     razorpayPaymentId: razorpay_payment_id,
-    status: "success",
     method: "razorpay",
-  };
-
-  order.paidAt = new Date();
-
-  await order.save();
+  });
 
   return {
-    order,
+    order: confirmedOrder,
     payment,
     message: "Payment verified successfully",
   };

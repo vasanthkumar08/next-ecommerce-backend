@@ -31,6 +31,7 @@ const shippingAddressSchema = Joi.object({
 
 export const createOrderValidator = Joi.object({
   items: Joi.array().items(orderItemSchema).min(1).required(),
+  idempotencyKey: Joi.string().trim().max(128).optional(),
 
   shippingAddress: shippingAddressSchema.required(),
 

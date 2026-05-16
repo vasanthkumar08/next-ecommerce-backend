@@ -27,7 +27,7 @@ export const create = async (
     if (!req.user?._id) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
-    const { shippingAddress, paymentMethod, items } = req.body;
+    const { shippingAddress, paymentMethod, items, idempotencyKey } = req.body;
 
     if (
       !shippingAddress?.address ||
@@ -45,7 +45,13 @@ export const create = async (
       req.user._id,
       shippingAddress,
       paymentMethod,
-      items
+      items,
+      {
+        idempotencyKey:
+          typeof idempotencyKey === "string"
+            ? idempotencyKey
+            : req.headers["idempotency-key"]?.toString(),
+      }
     );
 
     sendResponse(
@@ -109,7 +115,9 @@ export const getOne = async (
     }
 
     const role =
-      req.user.role === "admin" || req.user.role === "manager"
+      req.user.role === "admin" ||
+      req.user.role === "manager" ||
+      req.user.role === "moderator"
         ? req.user.role
         : "user";
     const order = await orderService.getOrderById(id, {
@@ -199,7 +207,12 @@ export const cancel = async (
 
     const order = await orderService.getOrderById(id, {
       _id: req.user._id,
-      role: req.user.role === "admin" || req.user.role === "manager" ? req.user.role : "user",
+      role:
+        req.user.role === "admin" ||
+        req.user.role === "manager" ||
+        req.user.role === "moderator"
+          ? req.user.role
+          : "user",
     });
 
     if (order.isDelivered) {

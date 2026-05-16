@@ -78,7 +78,7 @@ export const userQuerySchema = Joi.object({
   page: Joi.number().integer().min(1).optional(),
   limit: Joi.number().integer().min(1).max(50).optional(),
 
-  role: Joi.string().valid("user", "admin").optional(),
+  role: Joi.string().valid("user", "admin", "moderator", "manager").optional(),
   isBlocked: Joi.boolean().optional(),
 }).options({
   abortEarly: false,

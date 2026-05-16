@@ -15,7 +15,7 @@ export interface IPayment extends Document {
   razorpayPaymentId?: string;
   razorpaySignature?: string;
 
-  status: "created" | "success" | "failed" | "refunded";
+  status: "creating" | "created" | "success" | "failed" | "refunded";
 
   method?: string;
 
@@ -68,7 +68,7 @@ const paymentSchema = new Schema<IPayment>(
 
     status: {
       type: String,
-      enum: ["created", "success", "failed", "refunded"],
+      enum: ["creating", "created", "success", "failed", "refunded"],
       default: "created",
       index: true, // ✅ keep this
     },
@@ -90,6 +90,11 @@ const paymentSchema = new Schema<IPayment>(
 // ✅ unique constraint handled here only
 paymentSchema.index(
   { razorpayOrderId: 1 },
+  { unique: true, sparse: true }
+);
+paymentSchema.index({ order: 1 }, { unique: true });
+paymentSchema.index(
+  { razorpayPaymentId: 1 },
   { unique: true, sparse: true }
 );
 

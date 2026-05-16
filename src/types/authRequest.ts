@@ -4,8 +4,9 @@ import { ParamsDictionary, Query } from "express-serve-static-core";
 /* ===================== AUTH USER ===================== */
 export interface AuthUser {
   _id: string;
-  role?: string;
+  role?: "user" | "admin" | "moderator" | "manager";
   email?: string;
+  sessionId?: string;
 }
 
 /* ===================== AUTH REQUEST ===================== */

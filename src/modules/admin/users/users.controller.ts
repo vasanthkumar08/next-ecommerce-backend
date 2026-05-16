@@ -3,7 +3,7 @@ import User from "../../user/user.model.js";
 import Order from "../../order/order.model.js";
 import { sendResponse } from "../../../utils/response.js";
 
-const userRoles = ["admin", "user", "manager"] as const;
+const userRoles = ["admin", "user", "moderator", "manager"] as const;
 type UserRole = (typeof userRoles)[number];
 
 const isUserRole = (value: unknown): value is UserRole =>
@@ -92,7 +92,7 @@ export const setUserRole = async (
     if (!isUserRole(req.body.role)) {
       return res.status(400).json({
         success: false,
-        message: "role must be admin, user, or manager",
+        message: "role must be admin, user, moderator, or manager",
       });
     }
 

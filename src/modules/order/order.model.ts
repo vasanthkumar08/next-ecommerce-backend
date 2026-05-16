@@ -23,6 +23,8 @@ export interface IOrder extends Document {
   totalPrice?: number;
 
   currency: string;
+  idempotencyKey?: string;
+  stockReservationExpiresAt?: Date;
 
   status:
     | "pending"
@@ -110,6 +112,8 @@ const orderSchema = new Schema<IOrder>(
     totalPrice: { type: Number, min: 0 },
 
     currency: { type: String, default: "INR" },
+    idempotencyKey: { type: String, trim: true },
+    stockReservationExpiresAt: Date,
 
     status: {
       type: String,
@@ -209,6 +213,14 @@ orderSchema.index({ user: 1, createdAt: -1 });
 
 // ✅ single index (kept here only)
 orderSchema.index({ status: 1 });
+orderSchema.index(
+  { user: 1, idempotencyKey: 1 },
+  {
+    unique: true,
+    sparse: true,
+  }
+);
+orderSchema.index({ status: 1, stockReservationExpiresAt: 1 });
 
 /* ===================== MODEL ===================== */
 

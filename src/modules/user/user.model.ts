@@ -1,5 +1,7 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 import bcrypt from "bcryptjs";
+import argon2 from "argon2";
+import type { AuthRole } from "../auth/auth.types.js";
 /* ===================== TYPES ===================== */
 
 export interface IAvatar {
@@ -11,8 +13,10 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
-  role: "user" | "admin" | "manager";
+  role: AuthRole;
   isBlocked: boolean;
+  emailVerified: boolean;
+  emailVerifiedAt?: Date;
   avatar: IAvatar;
   passwordChangedAt?: Date;
   refreshToken?: string;
@@ -62,7 +66,7 @@ const userSchema = new Schema<IUser>(
 
     role: {
       type: String,
-      enum: ["user", "admin", "manager"],
+      enum: ["user", "admin", "moderator", "manager"],
       default: "user",
     },
 
@@ -70,6 +74,14 @@ const userSchema = new Schema<IUser>(
       type: Boolean,
       default: false,
     },
+
+    emailVerified: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
+    emailVerifiedAt: Date,
 
     avatar: avatarSchema,
 
@@ -99,7 +111,15 @@ const userSchema = new Schema<IUser>(
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
 
-  this.password = await bcrypt.hash(this.password, 12);
+  // Argon2id is memory-hard, which raises the cost of offline password cracking.
+  // Existing bcrypt hashes are still accepted during login and are upgraded on the
+  // next password write, preserving current users without a forced reset.
+  this.password = await argon2.hash(this.password, {
+    type: argon2.argon2id,
+    memoryCost: 19_456,
+    timeCost: 2,
+    parallelism: 1,
+  });
 
   if (!this.isNew) {
     this.passwordChangedAt = new Date(Date.now() - 1000);
@@ -115,6 +135,10 @@ userSchema.pre("save", async function () {
 userSchema.methods.comparePassword = async function (
   password: string
 ): Promise<boolean> {
+  if (typeof this.password === "string" && this.password.startsWith("$argon2")) {
+    return argon2.verify(this.password, password);
+  }
+
   return bcrypt.compare(password, this.password);
 };
 

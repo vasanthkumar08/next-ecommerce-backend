@@ -1,5 +1,6 @@
 import Product from "./product.model.js";
 import { ClientSession, Types } from "mongoose";
+import AppError from "../../utils/AppError.js";
 
 interface OrderItem {
   product: Types.ObjectId | string;
@@ -24,11 +25,18 @@ export const reserveStock = async (
   session: ClientSession
 ): Promise<void> => {
   for (const item of items) {
-    await Product.updateOne(
-      { _id: item.product },
+    const result = await Product.updateOne(
+      {
+        _id: item.product,
+        stock: { $gte: item.quantity },
+      },
       { $inc: { stock: -item.quantity, reservedStock: item.quantity } },
       { session }
     );
+
+    if (result.matchedCount !== 1) {
+      throw new AppError(`Insufficient stock for product ${item.product}`, 409);
+    }
   }
 };
 
@@ -37,11 +45,18 @@ export const confirmStock = async (
   session: ClientSession
 ): Promise<void> => {
   for (const item of items) {
-    await Product.updateOne(
-      { _id: item.product },
+    const result = await Product.updateOne(
+      {
+        _id: item.product,
+        reservedStock: { $gte: item.quantity },
+      },
       { $inc: { reservedStock: -item.quantity } },
       { session }
     );
+
+    if (result.matchedCount !== 1) {
+      throw new AppError(`Reserved stock mismatch for product ${item.product}`, 409);
+    }
   }
 };
 
@@ -50,10 +65,17 @@ export const releaseStock = async (
   session: ClientSession
 ): Promise<void> => {
   for (const item of items) {
-    await Product.updateOne(
-      { _id: item.product },
+    const result = await Product.updateOne(
+      {
+        _id: item.product,
+        reservedStock: { $gte: item.quantity },
+      },
       { $inc: { stock: item.quantity, reservedStock: -item.quantity } },
       { session }
     );
+
+    if (result.matchedCount !== 1) {
+      throw new AppError(`Reserved stock mismatch for product ${item.product}`, 409);
+    }
   }
 };

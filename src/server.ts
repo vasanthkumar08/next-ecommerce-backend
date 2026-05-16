@@ -5,10 +5,11 @@ import "./config/env.js";
 import app from "./app.js";
 import connectDB from "./config/db.js";
 import { setupGraphQL } from "./graphql/server.js";
+import logger from "./utils/logger.js";
 
 // ================= UNCAUGHT EXCEPTION =================
 process.on("uncaughtException", (err) => {
-  console.error("❌ Uncaught Exception:", err);
+  logger.error("uncaught_exception", { error: err });
   process.exit(1);
 });
 
@@ -31,38 +32,37 @@ const bootstrap = async () => {
   await setupGraphQL(app);
 
   // ================= SERVER =================
-const PORT = process.env.PORT || 5000;
+  const PORT = process.env.PORT || 5000;
 
   server = app.listen(PORT, () => {
-    console.log(
-      `🚀 Server running on port ${PORT} in ${
-        process.env.NODE_ENV || "development"
-      } mode`
-    );
-    console.log("🧩 GraphQL ready at /graphql");
+    logger.info("server_started", {
+      port: PORT,
+      environment: process.env.NODE_ENV || "development",
+    });
+    logger.info("graphql_ready", { path: "/graphql" });
   });
 };
 
 bootstrap().catch((err) => {
-  console.error("❌ Server bootstrap failed:", err);
+  logger.error("server_bootstrap_failed", { error: err });
   process.exit(1);
 });
 
 // ================= ERROR HANDLING =================
 process.on("unhandledRejection", (err) => {
-  console.error("❌ Unhandled Rejection:", err);
+  logger.error("unhandled_rejection", { error: err });
   closeServer(() => process.exit(1));
 });
 
 // ================= SHUTDOWN =================
 process.on("SIGTERM", () => {
-  console.log("⚠️ SIGTERM received");
-  closeServer(() => console.log("🛑 Server stopped"));
+  logger.warn("sigterm_received");
+  closeServer(() => logger.info("server_stopped"));
 });
 
 process.on("SIGINT", () => {
-  console.log("⚠️ SIGINT received");
-  closeServer(() => console.log("🛑 Server stopped"));
+  logger.warn("sigint_received");
+  closeServer(() => logger.info("server_stopped"));
 });
 
 // ================= WARN FILTER =================

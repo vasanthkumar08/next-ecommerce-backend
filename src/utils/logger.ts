@@ -1,10 +1,16 @@
 import winston from "winston";
 import path from "path";
+import fs from "fs";
 
 /**
  * 📁 Log directory
  */
 const logDir = "logs";
+const logToFile = process.env.LOG_TO_FILE === "true";
+
+if (logToFile) {
+  fs.mkdirSync(logDir, { recursive: true });
+}
  
 /**
  * 🎯 Logger instance
@@ -21,33 +27,27 @@ const logger = winston.createLogger({
   ),
 
   transports: [
+    new winston.transports.Console(),
+  ],
+});
+
+if (logToFile) {
+  logger.add(
     /**
      * ❌ Error logs
      */
     new winston.transports.File({
       filename: path.join(logDir, "error.log"),
       level: "error",
-    }),
+    })
+  );
 
+  logger.add(
     /**
      * 📦 All logs
      */
     new winston.transports.File({
       filename: path.join(logDir, "combined.log"),
-    }),
-  ],
-});
-
-/**
- * 🖥 Console logs (dev only)
- */
-if (process.env.NODE_ENV !== "production") {
-  logger.add(
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple()
-      ),
     })
   );
 }

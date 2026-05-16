@@ -128,11 +128,15 @@ export const resolvers = {
 
   Mutation: {
     registerUser: async (_: unknown, args: { input: { name: string; email: string; password: string } }) => {
-      const user = await authService.registerUser(args.input);
+      const user = await authService.registerUser({
+        ...args.input,
+        confirmPassword: args.input.password,
+      });
       const login = await authService.loginUser({
         email: args.input.email,
         password: args.input.password,
-      });
+        rememberMe: false,
+      }, { ip: "", userAgent: "graphql" });
 
       return {
         user,
@@ -142,7 +146,10 @@ export const resolvers = {
     },
 
     loginUser: async (_: unknown, args: { input: { email: string; password: string } }) => {
-      const { user, accessToken } = await authService.loginUser(args.input);
+      const { user, accessToken } = await authService.loginUser({
+        ...args.input,
+        rememberMe: false,
+      }, { ip: "", userAgent: "graphql" });
 
       return {
         user,

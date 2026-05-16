@@ -7,17 +7,22 @@ import env from "../config/env.js";
 interface UserPayload {
   _id: string;
   role: string;
+  sessionId: string;
 }
 
 interface AccessTokenPayload {
   sub: string;
   role: string;
+  sid: string;
+  typ: "access";
 }
 
 interface RefreshTokenPayload {
   jti: string;
+  sub: string;
+  sid: string;
+  typ: "refresh";
   iss?: string;
-  sub?: string;
   aud?: string | string[];
   exp?: number;
   nbf?: number;
@@ -31,6 +36,8 @@ export const generateAccessToken = (user: UserPayload): string => {
     {
       sub: user._id,
       role: user.role,
+      sid: user.sessionId,
+      typ: "access",
     } as AccessTokenPayload,
     env.JWT_SECRET,
     {
@@ -43,11 +50,20 @@ export const generateAccessToken = (user: UserPayload): string => {
 
 /* ===================== REFRESH TOKEN ===================== */
 
-export const generateRefreshToken = (): { token: string; jti: string } => {
-  const jti = crypto.randomUUID();
+export const generateRefreshToken = (payload: {
+  userId: string;
+  sessionId: string;
+  tokenId?: string;
+}): { token: string; jti: string } => {
+  const jti = payload.tokenId ?? crypto.randomUUID();
 
   const token = jwt.sign(
-    { jti },
+    {
+      jti,
+      sub: payload.userId,
+      sid: payload.sessionId,
+      typ: "refresh",
+    } as RefreshTokenPayload,
     env.JWT_REFRESH_SECRET,
     {
       expiresIn: env.JWT_REFRESH_EXPIRES_IN,
@@ -62,15 +78,27 @@ export const generateRefreshToken = (): { token: string; jti: string } => {
 /* ===================== VERIFY TOKENS ===================== */
 
 export const verifyAccessToken = (token: string): AccessTokenPayload => {
-  return jwt.verify(token, env.JWT_SECRET, {
+  const decoded = jwt.verify(token, env.JWT_SECRET, {
     issuer: "your-app",
     audience: "your-app-users",
   }) as AccessTokenPayload;
+
+  if (decoded.typ !== "access") {
+    throw new Error("Invalid token type");
+  }
+
+  return decoded;
 };
 
 export const verifyRefreshToken = (token: string): RefreshTokenPayload => {
-  return jwt.verify(token, env.JWT_REFRESH_SECRET, {
+  const decoded = jwt.verify(token, env.JWT_REFRESH_SECRET, {
     issuer: "your-app",
     audience: "your-app-users",
   }) as RefreshTokenPayload;
+
+  if (decoded.typ !== "refresh") {
+    throw new Error("Invalid token type");
+  }
+
+  return decoded;
 };

@@ -20,6 +20,31 @@ requiredEnv.forEach((key) => {
   }
 });
 
+const requireStrongSecret = (key: string): string => {
+  const value = process.env[key];
+
+  if (!value) {
+    throw new Error(`❌ Missing env variable: ${key}`);
+  }
+
+  if (process.env.NODE_ENV === "production" && value.length < 32) {
+    throw new Error(`❌ ${key} must be at least 32 characters in production`);
+  }
+
+  return value;
+};
+
+const authInternalSecret =
+  process.env.AUTH_INTERNAL_SECRET ||
+  process.env.AUTH_SECRET ||
+  requireStrongSecret("JWT_SECRET");
+
+if (process.env.NODE_ENV === "production" && authInternalSecret.length < 32) {
+  throw new Error(
+    "❌ AUTH_INTERNAL_SECRET must be at least 32 characters in production"
+  );
+}
+
 /**
  * 🌍 ENV TYPE
  */
@@ -54,6 +79,7 @@ interface Env {
 
   // Security
   BCRYPT_SALT_ROUNDS: number;
+  AUTH_INTERNAL_SECRET: string;
 
   // Redis
   REDIS_URL?: string;
@@ -72,8 +98,8 @@ const env: Env = {
   MONGO_MIN_POOL_SIZE: Number(process.env.MONGO_MIN_POOL_SIZE) || 5,
 
   // JWT
-  JWT_SECRET: process.env.JWT_SECRET as string,
-  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET as string,
+  JWT_SECRET: requireStrongSecret("JWT_SECRET"),
+  JWT_REFRESH_SECRET: requireStrongSecret("JWT_REFRESH_SECRET"),
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "15m",
   JWT_REFRESH_EXPIRES_IN:
     process.env.JWT_REFRESH_EXPIRES_IN || "7d",
@@ -97,6 +123,8 @@ const env: Env = {
   // Security
   BCRYPT_SALT_ROUNDS:
     Number(process.env.BCRYPT_SALT_ROUNDS) || 10,
+  AUTH_INTERNAL_SECRET:
+    authInternalSecret,
 
   // Redis
   REDIS_URL: process.env.REDIS_URL,

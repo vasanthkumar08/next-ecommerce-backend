@@ -1,4 +1,6 @@
 import express, { Request, Response, NextFunction, Router } from "express";
+import mongoose from "mongoose";
+import redis from "./config/redis.js";
 
 import authRoutes from "./modules/auth/auth.routes.js";
 import userRoutes from "./modules/user/user.routes.js";
@@ -27,11 +29,42 @@ router.use((req: Request, _res: Response, next: NextFunction): void => {
 router.get("/health", (_req: Request, res: Response): void => {
   res.status(200).json({
     success: true,
-    message: "API is running 🚀",
+    status: "ok",
+    message: "API is running",
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV,
   });
+});
+
+router.get("/live", (_req: Request, res: Response): void => {
+  res.status(200).json({
+    success: true,
+    status: "alive",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
+});
+
+router.get("/ready", async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const redisStatus = await redis.ping();
+    const mongoReady = mongoose.connection.readyState === 1;
+
+    res.status(mongoReady && redisStatus === "PONG" ? 200 : 503).json({
+      success: mongoReady && redisStatus === "PONG",
+      mongo: mongoReady ? "ready" : "not_ready",
+      redis: redisStatus === "PONG" ? "ready" : "not_ready",
+      timestamp: new Date().toISOString(),
+    });
+  } catch {
+    res.status(503).json({
+      success: false,
+      mongo: mongoose.connection.readyState === 1 ? "ready" : "not_ready",
+      redis: "not_ready",
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 const v1: Router = express.Router();

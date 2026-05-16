@@ -1,68 +1,95 @@
 import express, { Request, Response } from "express";
 
 import {
-  register,
+  forgotPassword,
   login,
-  refresh,
   logout,
+  logoutAll,
+  oauthSession,
+  refresh,
+  register,
+  requestEmailVerification,
+  resetPassword,
+  revokeSession,
+  sessions,
+  verifyEmail,
 } from "./auth.controller.js";
 
-import { validate } from "../../middleware/validate.middleware.js";
-import { registerSchema, loginSchema } from "./auth.validator.js";
-
+import { validateZod } from "../../middleware/zodValidate.middleware.js";
 import {
-  rateLimitMiddleware,
-  authLimiter,
-} from "../../middleware/rateLimiter.js";
+  forgotPasswordSchema,
+  loginSchema,
+  oauthSessionSchema,
+  registerSchema,
+  resetPasswordSchema,
+  verifyEmailSchema,
+} from "./auth.validator.js";
 
 import { protect } from "../../middleware/auth.middleware.js";
+import {
+  enforceRateLimit,
+  loginLimiter,
+  passwordResetLimiter,
+  refreshLimiter,
+  registerLimiter,
+} from "../../lib/rate-limit/authRateLimit.js";
 
 const router = express.Router();
 
-const rateLimitWhenRefreshCookieExists = (
-  req: express.Request,
-  res: express.Response,
-  next: express.NextFunction
-) => {
-  if (!req.cookies?.refreshToken) return next();
-  return rateLimitMiddleware(authLimiter)(req, res, next);
-};
-
-/* ===================== REGISTER ===================== */
 router.post(
   "/register",
-  validate({ body: registerSchema }),
+  enforceRateLimit(registerLimiter),
+  validateZod({ body: registerSchema }),
   register
 );
 
-/* ===================== LOGIN ===================== */
 router.post(
   "/login",
-  rateLimitMiddleware(authLimiter),
-  validate({ body: loginSchema }),
+  enforceRateLimit(loginLimiter),
+  validateZod({ body: loginSchema }),
   login
 );
 
-/* ===================== REFRESH TOKEN ===================== */
 router.post(
-  "/refresh",
-  rateLimitWhenRefreshCookieExists,
-  refresh
+  "/oauth/session",
+  enforceRateLimit(loginLimiter),
+  validateZod({ body: oauthSessionSchema }),
+  oauthSession
 );
 
-/* ===================== LOGOUT ===================== */
-router.post(
-  "/logout",
-  rateLimitWhenRefreshCookieExists,
-  logout
-);
+router.post("/refresh", enforceRateLimit(refreshLimiter), refresh);
+router.post("/logout", enforceRateLimit(refreshLimiter), logout);
+router.post("/logout-all", protect, logoutAll);
 
-/* ===================== ME ===================== */
 router.get("/me", protect, (req: Request, res: Response) => {
   res.json({
     success: true,
     data: req.user,
   });
 });
+
+router.get("/sessions", protect, sessions);
+router.delete("/sessions/:sessionId", protect, revokeSession);
+
+router.post(
+  "/forgot-password",
+  enforceRateLimit(passwordResetLimiter),
+  validateZod({ body: forgotPasswordSchema }),
+  forgotPassword
+);
+
+router.post(
+  "/reset-password",
+  enforceRateLimit(passwordResetLimiter),
+  validateZod({ body: resetPasswordSchema }),
+  resetPassword
+);
+
+router.post("/email/verification", protect, requestEmailVerification);
+router.post(
+  "/email/verify",
+  validateZod({ body: verifyEmailSchema }),
+  verifyEmail
+);
 
 export default router;

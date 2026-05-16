@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 
-export type AppRole = "admin" | "user";
+export type AppRole = "admin" | "user" | "moderator" | "manager";
 
 export const requireRole = (...roles: AppRole[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
